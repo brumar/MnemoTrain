@@ -1,0 +1,54 @@
+Reaction Time analysis
+========================================================
+
+## screening the datas
+```{r}
+library(ggplot2)
+graphics.off()
+t=read.csv2("../numbers.csv",sep=";",colClasses=c("factor","factor","numeric","factor","numeric","factor"),dec=".")
+```
+### no outlier filtering
+```{r}
+hist(t$time)
+var(t$time)
+mean(t$time)
+```
+### first buggy outlier filtering and item by item analysis
+```{r}
+outlierFilter=t$time<5
+t=t[outlierFilter,]
+means.t=tapply(t$time,t$item, mean)
+hist(means.t)
+vari=var(t$time)
+mean=mean(t$time)
+vari
+mean
+outlierBound=mean+2*sqrt(vari)
+outlierBound
+```
+### outlier filtering and means item by item analysis
+```{r}
+outlierFilter1=t$time<outlierBound
+t=t[outlierFilter1,]
+means.t=tapply(t$time,t$item, mean)
+var.t=tapply(t$time,t$item, var)
+hist(means.t)
+boxplot(means.t)
+stripchart(means.t, 
+            vertical = TRUE, method = "jitter", 
+            pch = 21, col = "maroon", bg = "bisque", 
+            add = TRUE) 
+sort(means.t)
+```
+#### small analysis : are doubles easier to react on ?
+```{r}
+doubles=c(00,11,22,33,44,55,66,77,88,99)
+Ldoubles=(t$item %in% doubles)
+Lnotdoubles=!Ldoubles
+t.doubles=t[Ldoubles,]
+t.notDoubles=t[Lnotdoubles,]
+mdoubles=tapply(t.doubles$time,t.doubles$item, mean)
+mnotDoubles=tapply(t.notDoubles$time,t.notDoubles$item, mean)
+t.test(mdoubles,mnotDoubles)
+```
+Indeed.
