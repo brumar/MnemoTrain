@@ -108,7 +108,7 @@ if (mode=="mb"):
                 ok=False
                 break
         timeElapsed=time.clock()-ts
-        f1.write(system+";"+findType(system,i)+";"+ str(i)+";"+ str(n)+ ";"+str(timeElapsed)+";miniBinaries\n")
+        f1.write(system+";"+findType(system,i)+";"+ str(i)+";"+ str(time.time())+ ";"+str(timeElapsed)+";miniBinaries\n")
         if(timeElapsed<goal):
             print("you accomplished your goal (<"+str(goal)+" s)"+" in "+str(trials)+" trials ")
             ok=False
@@ -140,7 +140,7 @@ else:
                     randomList.insert(i+decalage,m)
             else:
                 score+=1
-            f1.write(system+";"+findType(system,i)+";"+ str(i)+";"+ str(n)+ ";"+str(timeElapsed)+";"+ms+"\n")
+            f1.write(system+";"+findType(system,i)+";"+ str(i)+";"+ str(time.time())+ ";"+str(timeElapsed)+";"+ms+"\n")
 f1.close()
 f2.close()
 

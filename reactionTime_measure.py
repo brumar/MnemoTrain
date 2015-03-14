@@ -57,7 +57,7 @@ for i in range(0,n):
     else :
         tfinal= time.clock()
         timeElapsed=tfinal-tstart
-        f1.write(system+";"+findType(system,i)+";"+ str(i)+";"+ str(n)+ ";"+str(timeElapsed)+";"+ms+"\n")
+        f1.write(system+";"+findType(system,i)+";"+ str(i)+";"+ str(time.time())+ ";"+str(timeElapsed)+";"+ms+"\n")
 f1.close()
 
 
