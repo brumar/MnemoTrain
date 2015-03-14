@@ -8,7 +8,7 @@ n = 1000
 
 mode = raw_input('what do you want to train (b/mb/n), default = n : ')
 system = raw_input('system (PAP)(P)(A) : ')
-f2=open('./global.txt', 'a')
+f2=open('./rawDatas/global.txt', 'a')
 filename="numbers.csv" # by default
 
 if (mode==""):
@@ -27,7 +27,7 @@ else:
     scoreLimit = raw_input('how many items below your bar ? (default 30)   ')
 
 
-f1=open('./'+filename, 'a')
+f1=open('./rawDatas/'+filename, 'a')
 
 if (scoreLimit==""):
     scoreLimit=30

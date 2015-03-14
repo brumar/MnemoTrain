@@ -6,7 +6,7 @@ import time
 
 n = raw_input('numbers (15 by default) : ')
 system = raw_input('system (PAP)(P)(A) : ')
-f1=open('./times.txt', 'a')
+f1=open('./rawDatas/times.txt', 'a')
 
 
 def createString(number):

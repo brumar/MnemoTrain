@@ -5,7 +5,7 @@ Reaction Time analysis
 ```{r}
 library(ggplot2)
 graphics.off()
-t=read.csv2("../numbers.csv",sep=";",colClasses=c("factor","factor","numeric","factor","numeric","factor"),dec=".")
+t=read.csv2("../rawDatas/numbers.csv",sep=";",colClasses=c("factor","factor","numeric","factor","numeric","factor"),dec=".")
 ```
 ### no outlier filtering
 ```{r}
