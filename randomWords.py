@@ -1,19 +1,29 @@
 import random
 
-dictionnary='./dictionnaries/french/newDic.csv'
+dictionnary='./dictionnaries/french/newDic2.csv'
 nbRows=20
 lengthColumn=5
 
 verbs=[]
 nouns=[]
 
-#time=raw_input("length in minutes (default 5)")
+number_input=raw_input("N th Most frequent words (no if no limit, default=8000) : ")
+if(number_input==""):
+    number_input=8000
+else:
+    if(number_input=="no"):
+        number_input=100000
+    else:
+        number_input=float(number_input)
+
 sizecell=20
 
 
 with open(dictionnary, 'rb') as csvfile:
-    spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
-    for row in spamreader:
+    spamreader = csv.reader(csvfile, delimiter=';', quotechar='"')
+    for r,row in enumerate(spamreader):
+        if(r==number_input):
+            break
         if(row[0]=="n"):
             nouns.append(row[1])
         if(row[0]=="v"):
