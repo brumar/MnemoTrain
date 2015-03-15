@@ -119,7 +119,7 @@ if (mode=="mb"):
 else:
     for i,m in enumerate(randomList):
         if(score==scoreLimit):
-            message="you accomplished your goal (<"+str(goal)+" s)"+"for "+str(int(scoreLimit))+" items in "+str(int(time.clock()-tstartExperiment))+" seconds "+"\n"
+            message="you got your goal (<"+str(goal)+" s)"+"for "+str(int(scoreLimit))+" items ("+str(i)+" total items viewed) in "+str(int(time.clock()-tstartExperiment))+" seconds "+"\n"
             print(message)
             f2.write(message)
             break
