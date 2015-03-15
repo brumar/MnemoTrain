@@ -23,7 +23,7 @@ else:
         filename="binaries.csv"
         goal= raw_input('goal (3s by default) :  ')
     else :
-        goal= raw_input('goal (1.2s by default) :  ')
+        goal= raw_input('goal (1.15s by default) :  ')
     scoreLimit = raw_input('how many items below your bar ? (default 30)   ')
 
 
@@ -44,7 +44,7 @@ if (goal==""):
         if (mode=="b"):
             goal=3
         else:
-            goal=1.2
+            goal=1.15
 else:
     goal=float(goal)
 
@@ -75,7 +75,7 @@ def waiter():
 def createRandomList(n,mode): # n probably useless
     v=[]
     if mode=="n":
-        v = [x for x in range(0,99)]
+        v = [x for x in range(0,100)]
     if mode=="b":
         v=[bits for bits in itertools.product([0, 1], repeat=6)]
     if mode=="mb":
