@@ -40,3 +40,8 @@ you accomplished your goal (<1.2 s)for 30 items in 61 seconds
 you accomplished your goal (<1.2 s)for 30 items in 53 seconds 
 you accomplished your goal (<1.2 s)for 30 items in 57 seconds 
 you accomplished your goal (<1.2 s)for 30 items in 53 seconds 
+you accomplished your goal (<1.15 s)for 30 items in 103 seconds 
+you got your goal (<1.15 s)for 30 items (50 total items viewed) in 69 seconds 
+you got your goal (<1.15 s)for 30 items (61 total items viewed) in 89 seconds 
+you got your goal (<1.15 s)for 30 items (58 total items viewed) in 88 seconds 
+you got your goal (<1.15 s)for 30 items (72 total items viewed) in 132 seconds 
