@@ -3,3 +3,10 @@ dictionnaries/french/betDic.py
 dictionnaries/french/frequency.txt
 dictionnaries/french/betDicOrdered.py
 dictionnaries/french/orderedlist.txt
+Loci/*.csv
+word_temp.txt
+num_temp.txt
+lociManager.py
+bin_temp.txt
+binaries_feat.py
+temp.txt
