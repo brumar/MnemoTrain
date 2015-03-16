@@ -34,9 +34,8 @@ class Feat:
         time.sleep(self.memoTime)
         print("\n"*30)
         timeResti=time.clock()
-        with open(self.tempFile, 'w') as f:
-            pass
-        os.system("start "+self.tempFile)# windows only, for mac : os.system("open "+filename)
+        self.createAndOpenSheet()
+
         do=raw_input("quit (q), load the answer file(l) : ")
         if(do=="l"):
             timeElapsed=round(time.clock()-timeResti)
@@ -45,15 +44,24 @@ class Feat:
             self.print_debrief(errors,points,nlines,timeElapsed)
         return self.solution,self.answer
 
+    def createAndOpenSheet(self):
+        with open(self.tempFile, 'w') as f:
+            pass
+        os.system("start "+self.tempFile)# windows only, for mac : os.system("open "+filename)
+
     def print_debrief(self,errors,points,nl,timeElapsed):
         self.print_table(nl)
         print("\n")
         print("you got "+str(points)+" points")
         print("remaining restitution time : "+str(self.restiTime-timeElapsed))+" s"
-        message2="feat : %s, memotime : %s, points : %s"%(str(self.__class__.__name__),str(self.memoTime),str(points))
+        message2="feat : %s, memotime : %s, points : %s \n"%(str(self.__class__.__name__),str(self.memoTime),str(points))
         f2.write(message2)      
         for error in errors:
-            print "at line %d,column %d you wrote %s instead of %s"  % (error[0], error[1],error[2],error[3])
+            if(len(error)==4):
+                print "at line %d,column %d you wrote %s instead of %s"  % (error[0], error[1],error[2],error[3])
+            elif (len(error)==3):
+                print "at line %d you wrote %s instead of %s"  % (error[0], error[1],error[2])
+                
                     
 
     def print_table(self,nR):
@@ -87,6 +95,15 @@ class Feat:
             self.table+=row+sep+"\n"
             self.solution.append(solutionline)
 
+    def update_table_solution(self): # dirty and incomplete
+        self.table=""
+        sep=self.separator
+        for solutionline in self.solution:
+            row=""
+            for item in solutionline:
+                row+=sep+item
+            self.table+=row+sep+"\n"
+
     def buildAnswerFromFile(self,fname):
         answer=[]
         with open(fname, 'rb') as csvfile:
@@ -101,8 +118,6 @@ class Feat:
                 answer.append(lanswer)
         return answer
             
-    def generateItem( self ):
-        raise NotImplementedError( "Should have implemented generateItem" )
 
     def compareSolutionAnswer(self,lsol,lansw): 
         indexL=0
@@ -131,8 +146,64 @@ class Feat:
 
 
     
-     
+class Dates(Feat):
+    def __init__(self, nbRows, lengthColumn,memoTime,restiTime,separator="|",separatorPlaceHolder=2,tempFile="temp.txt",indent=5,freqMax=8000,dico='./dates/13jan.csv',sizeCell=20,blocMode=True,revert=True):
+        Feat.__init__(self, nbRows, lengthColumn,memoTime,restiTime,sizeCell,separator,separatorPlaceHolder,tempFile,indent,blocMode=True)    
+        self.dates=[]
+        self.readDic(dico)#put 2 extra arguments + sizecell=20
+    def readDic(self,dictionnary):
+        with open(dictionnary, 'rb') as csvfile:
+            spamreader = csv.reader(csvfile, delimiter=';', quotechar='"')
+            for r,row in enumerate(spamreader):
+                self.dates.extend(row)
+                
+    def generateItem(self):
+        date=str(random.randint(1000, 2099))
+        label=random.choice(self.dates)
+        return date+self.separator+label
 
+    def createAndOpenSheet(self): #overriding default method
+        with open(self.tempFile, 'wb') as f:
+            dates=[]
+            random.shuffle(self.solution)#recall sheet is shuffled !
+            self.update_table_solution()#update table accordingly
+            for l in self.solution:
+                datelabel=l[0][4:]
+                date=l[0][:4]
+                dates.append(date)
+                f.write(datelabel+'\n')
+            self.solution=dates
+        os.system("start "+self.tempFile)# windows only, for mac : os.system("open "+filename)
+
+    def buildAnswerFromFile(self,fname):
+        answer=[]
+        with open(fname, 'rb') as f:
+            for line in f:
+                answer.append(line[:4])
+        return answer
+
+    def compareSolutionAnswer(self,lsol,lansw): #override
+        indexL=0
+        points=0
+        errors=[]
+        for linAns in lansw:
+            lineErrors=0
+            indexCol=0
+            date=""
+            for digit in linAns:
+                date+=digit
+                if digit=="|":
+                    break
+            if(date!="|"):
+                if(lsol[indexL]!=date):
+                    errorReport=[indexL,date,lsol[indexL]]
+                    errors.append(errorReport)
+                    lineErrors+=1
+                else:
+                    points+=1
+            indexL+=1
+        return(errors,points,indexL)
+                
 class Numbers(Feat):
     def __init__(self, nbRows, lengthColumn,memoTime,restiTime,separator="|",separatorPlaceHolder=2,tempFile="temp.txt",indent=5,sizeCell=None,blocMode=False):
         Feat.__init__(self, nbRows, lengthColumn,memoTime,restiTime,sizeCell,separator,separatorPlaceHolder,tempFile,indent,blocMode)
@@ -323,10 +394,13 @@ def profileLoader(profileFile):
 
 if __name__ == "__main__":
     
-    feat=raw_input("pick your feat (d=digits,b=binaries,w=words) : ")
+    feat=raw_input("pick your feat (d=digits,b=binaries,w=words,h=historicalDates) : ")
     if(feat=="")or(feat=="d"):
         feat="d"
         sep,row,col,memoTime,restiTime,sepSign=2,20,40,300,900,"|"
+        
+    if(feat=="h"):
+        sep,row,col,memoTime,restiTime,sepSign=1,60,1,300,900,"|"
         
     if(feat=="w"):
         freqMax=raw_input("N th Most frequent words (no if no limit, default=8000) : ")
@@ -371,6 +445,8 @@ if __name__ == "__main__":
         ff=Words(row, col,memoTime,restiTime,sepSign,sep,"word_temp.txt",indent=2,freqMax=freqMax,sizeCell=20)
     if(feat=="d"):
         ff=Numbers(row, col,memoTime,restiTime,sepSign,sep,"num_temp.txt",indent=5)
+    if(feat=="h"):
+        ff=Dates(row, col,memoTime,restiTime,sepSign,sep,"dates_temp.txt",indent=5)
     [solution,answer]=ff.proceed()
     report=raw_input("report results (y/n) (default=n) : ")
     
