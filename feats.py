@@ -11,6 +11,8 @@ datas="./rawDatas/feats.csv"
 f2=open('./rawDatas/global.txt', 'a') #print globalMessages
 
 class Feat:
+    """Class implementing the most important features of each feats
+    """
     def __init__(self, nbRows, lengthColumn,memoTime,restiTime,sizeCell=None,separator="",separatorPlaceHolder=2,tempFile="temp.txt",indent=5,blocMode=False,revert=False):
         self.nbRows = nbRows
         self.lengthColumn= lengthColumn
@@ -28,6 +30,8 @@ class Feat:
         self.revert=revert
 
     def proceed(self):
+        """Proceed to the feat
+        """
         self.build_table_solution()
         self.print_table(self.nbRows)
         print("\n"*9)
@@ -45,11 +49,15 @@ class Feat:
         return self.solution,self.answer
 
     def createAndOpenSheet(self):
+        """ Open a temp file as a recall sheet
+        """
         with open(self.tempFile, 'w') as f:
             pass
         os.system("start "+self.tempFile)# windows only, for mac : os.system("open "+filename)
 
     def print_debrief(self,errors,points,nl,timeElapsed):
+        """ Display User friendly outputs
+        """
         self.print_table(nl)
         print("\n")
         print("you got "+str(points)+" points")
@@ -60,11 +68,11 @@ class Feat:
             if(len(error)==4):
                 print "at line %d,column %d you wrote %s instead of %s"  % (error[0], error[1],error[2],error[3])
             elif (len(error)==3):
-                print "at line %d you wrote %s instead of %s"  % (error[0], error[1],error[2])
-                
-                    
+                print "at line %d you wrote %s instead of %s"  % (error[0], error[1],error[2])                
 
     def print_table(self,nR):
+        """ Display the table of the elements to be learned
+        """
         print("\n"*(10+(20-nR)/2))
         lines=self.table.splitlines()
         if(self.revert):
@@ -73,6 +81,9 @@ class Feat:
             print(lines[l])
             
     def build_table_solution(self):
+        """ Build the displayed table of the items to be learned
+            and build the solution vector"""
+        
         self.solution=[] # might be redundant
         self.table=""
         for r in range(self.nbRows):
@@ -83,7 +94,7 @@ class Feat:
                 if(self.separator!=""):
                     if(l%self.separatorPlaceHolder==0):
                         sep=self.separator
-                item=str(self.generateItem())
+                item=str(self.generateItem())       # use generateItem which must be implemented in inherited classes
                 solutionline.append(item)
                 if(self.sizeCell!=None):
                     decalTotal=self.sizeCell-len(item)
@@ -96,6 +107,7 @@ class Feat:
             self.solution.append(solutionline)
 
     def update_table_solution(self): # dirty and incomplete
+        """ Rebuild the displayed table according to the current solution vector"""
         self.table=""
         sep=self.separator
         for solutionline in self.solution:
@@ -105,6 +117,7 @@ class Feat:
             self.table+=row+sep+"\n"
 
     def buildAnswerFromFile(self,fname):
+        """ Read the recall file given by the user """
         answer=[]
         with open(fname, 'rb') as csvfile:
             spamreader = csv.reader(csvfile, delimiter=';')
@@ -119,7 +132,8 @@ class Feat:
         return answer
             
 
-    def compareSolutionAnswer(self,lsol,lansw): 
+    def compareSolutionAnswer(self,lsol,lansw):
+        """ compare the recall file with the target, count the points and raise the errors"""
         indexL=0
         points=0
         errors=[]
@@ -142,9 +156,6 @@ class Feat:
                   points+=indexCol  
             indexL+=1
         return(errors,points,indexL)
-    
-
-
     
 class Dates(Feat):
     def __init__(self, nbRows, lengthColumn,memoTime,restiTime,separator="|",separatorPlaceHolder=2,tempFile="temp.txt",indent=5,freqMax=8000,dico='./dates/13jan.csv',sizeCell=20,blocMode=True,revert=True):
@@ -192,9 +203,9 @@ class Dates(Feat):
             date=""
             for digit in linAns:
                 date+=digit
-                if digit=="|":
+                if digit==self.separator:
                     break
-            if(date!="|"):
+            if(date!=self.separator):
                 if(lsol[indexL]!=date):
                     errorReport=[indexL,date,lsol[indexL]]
                     errors.append(errorReport)
@@ -242,228 +253,3 @@ class Words(Feat):
             return random.choice(self.verbs)
         else:
             return random.choice(self.nouns)
-
-def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False):
-    if(revert): # columns are taken as lines in order to compare columns by columns
-        sol=zip(*sol)
-        ans=zip(*ans)
-    fsol=[item for sublist in sol for item in sublist]#flatten sol
-    fans=[item for sublist in ans for item in sublist]
-    blocs=system["system"].split(",")
-    currentLoci=""
-    indexAns=0
-    indexLoci=0
-    cont=True
-    localReport=[]
-    spot=0
-    #if loci is not defined, default values avoiding bugs
-    if(locis==None):
-        indexLoci=""
-        currentLoci=["",""]
-    while cont:
-        for b,bloc in enumerate(blocs):
-            if(locis!=None):
-                #print(locis)
-                #print(indexLoci)
-                try:
-                    currentLoci=locis[indexLoci]
-                except IndexError:
-                    decision=raw_input("your journey seems too short for this feat. This also may be dued to incorrect profile settings.\n reload another journey(r), use blank locis(b), quit(q) : ")
-                    if(decision=="r"):
-                        raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
-                        locis=lociLoader()
-                        reportDatas(sol,ans,system,globalReport,locis,checker="y")
-                    if(decision=="q"):
-                        os._exit(1)
-                    else:
-                        currentLoci=["",""]
-                        locis=None
-                indexLoci+=1
-            for image in bloc:
-                size=int(system["imagesSize"][image])
-                if(indexAns+size>len(fans)):
-                    cont=False
-                    break
-                spot+=1
-                answer=fans[indexAns:indexAns+size]
-                solution=fsol[indexAns:indexAns+size]
-                answer=''.join(answer)
-                solution=''.join(solution)
-                correct=(answer==solution)
-                localReport.append([answer,solution,correct,image,currentLoci[0],currentLoci[1],b,indexLoci,spot])
-                #print(answer,sol,currentLoci)
-                indexAns+=size
-    if(checker=="y")and(locis!=None):
-        checked=raw_input("the last loci you used was %s, containing %s, right ? (y/n) : "%(currentLoci[1],solution))
-        if(checked=="n"):
-            raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
-            locis=lociLoader()
-            reportDatas(sol,ans,system,globalReport,locis,checker="y")
-        else:
-            printReports(globalReport,localReport)
-    else:
-        printReports(globalReport,localReport)
-
-
-def printReports(globalReport,localReport):
-    with open(datas, 'ab') as f:
-        writer = csv.writer(f,delimiter=';')
-        for l in localReport:
-            l.extend(globalReport)
-            writer.writerow(l)
-    print("\n congratulations, the report has appended to "+datas)
-
-def updateUuid(fileName):
-    l=[]
-    with open(fileName, 'rb') as csvfile: #read
-        spamreader = csv.reader(csvfile, delimiter=';')
-        for row in spamreader:
-            #print(row)
-            lr=[]
-            if(len(row)==1):
-                lr.append(str(uuid.uuid1()))
-                lr.append(row[0])
-            else:
-                lr.extend(row)
-            l.append(lr)
-                
-    with open(fileName, 'wb') as f: #overwrite
-        writer = csv.writer(f,delimiter=';')
-        for lr in l:
-            writer.writerow(lr)
-
-def lociLoader():
-    while True:
-        lociFiles = [ f for f in listdir(locipath) if (isfile(join(locipath,f))and f[-4:]==".csv" )]
-        message="load options : "
-        for i,lf in enumerate(lociFiles):
-            message+="\n -"+lf+"("+str(i)+") "
-        message+="\n choice : "
-        il=raw_input(message)
-        chosenFile=lociFiles[int(il)]
-        fileName=join(locipath,chosenFile)
-        updateUuid(fileName)
-        locis=[]
-        startingIndex=raw_input("starting index (default=0) : ")
-        if(startingIndex!=""):
-            startingIndex=int(startingIndex)
-            
-        if(startingIndex==""):
-            startingIndex=0
-            
-        with open(fileName, 'rb') as csvfile: #read
-            spamreader = csv.reader(csvfile, delimiter=';')
-            for i,r in enumerate(spamreader):
-                if(i>startingIndex-1):
-                    locis.append(r)
-        
-        if(startingIndex!=0):
-            okloc=raw_input('the first loci was "'+str(locis[startingIndex][1])+'" ok ? (y/n) (default=y): ')
-            if(okloc!="n"):#if no, we continue to loop in loci selection
-                break
-        else:
-            break
-    return locis
-
-
-def profileLoader(profileFile):
-    systemDic={}
-    try:
-        profile = dict(line.strip().split('=') for line in open(profileFile))
-    except:
-        raise Exception(profileFile+" not found")
-    key=""
-    if(feat=="w"):
-        key=str(feat)+str(row) # for words, the number of row is more relevant
-    else :
-        key=str(feat)+str(col)
-    if(key in profile):
-        system=profile[key]
-        systemDic["system"]=system
-        temp={}
-        limages=list(set(system)-set(','))
-        for image in limages:
-            try:
-                temp[image]=profile[image]
-            except:
-                raise Exception("no size affected to "+image)
-        systemDic["imagesSize"]=temp
-    else:
-        raise Exception("no system for this feat")
-    return systemDic
-
-if __name__ == "__main__":
-    
-    feat=raw_input("pick your feat (d=digits,b=binaries,w=words,h=historicalDates) : ")
-    if(feat=="")or(feat=="d"):
-        feat="d"
-        sep,row,col,memoTime,restiTime,sepSign=2,20,40,300,900,"|"
-        
-    if(feat=="h"):
-        sep,row,col,memoTime,restiTime,sepSign=1,60,1,300,900,"|"
-        
-    if(feat=="w"):
-        freqMax=raw_input("N th Most frequent words (no if no limit, default=8000) : ")
-        if(freqMax==""):
-            freqMax=8000
-        else:
-            freqMax=int(freqMax)
-        sep,row,col,memoTime,restiTime,sepSign=1,20,5,300,900,"|"
-        
-    if(feat=="b"):
-        sep,row,col,memoTime,restiTime,sepSign=6,25,30,300,900,"|"
-        
-    else:
-        sepN=raw_input("separaters every N items (default=%d) : "%sep)
-        
-    nr=raw_input("how many rows (default=%d) : "%row)
-    nc=raw_input("how many cols (default=%d) : "%col)
-    mt=raw_input("how much time (s) (default=%ds) : "%memoTime)
-    rt=raw_input("how much time to write (s) (default=%ds) : "%restiTime)
-    
-
-    if (mt!=""):
-        maxTime=float(mt)
-
-    if (rt!=""):
-        restiTime=float(rt)
-        
-    if (nr!=""):
-        row=int(nr)
-
-    if (nc!=""):
-        col=int(nc)
-        
-    if(sepN!=""):
-        sep=int(sepN)
-  
-    memoTime=2    
-    #sep,row,col,memoTime,restiTime,sepSign=2,40,20,300,900
-    if(feat=="b"):
-        ff=Binaries(row, col,memoTime,restiTime,sepSign,sep,"bin_temp.txt",indent=5)
-    if(feat=="w"):
-        ff=Words(row, col,memoTime,restiTime,sepSign,sep,"word_temp.txt",indent=2,freqMax=freqMax,sizeCell=20)
-    if(feat=="d"):
-        ff=Numbers(row, col,memoTime,restiTime,sepSign,sep,"num_temp.txt",indent=5)
-    if(feat=="h"):
-        ff=Dates(row, col,memoTime,restiTime,sepSign,sep,"dates_temp.txt",indent=5)
-    [solution,answer]=ff.proceed()
-    report=raw_input("report results (y/n) (default=n) : ")
-    
-    if(report=="y"):
-        pr=raw_input("load profile (y/n) (default=n) : ")
-        locis,systemDic=None,None
-        if(pr=="y"):
-            systemDic=profileLoader('profile.properties')                
-        lo=raw_input("load journey (y/n) (default=n) : ")
-        checker="n"
-        if(lo=="y"):
-            locis=lociLoader()             
-            checker=raw_input("proceed to loci checker (advised) (y/n) (default=y) : ")
-            if(checker==""):
-                checker="y"
-        if(systemDic!=None):
-            globalReport=[feat,str(row), str(col),str(memoTime),str(restiTime),sepSign,str(round(time.time()))]
-            reportDatas(solution,answer,systemDic,globalReport,locis,checker,ff.revert)
-        
-
