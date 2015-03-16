@@ -194,7 +194,19 @@ def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False)
             if(locis!=None):
                 #print(locis)
                 #print(indexLoci)
-                currentLoci=locis[indexLoci]
+                try:
+                    currentLoci=locis[indexLoci]
+                except IndexError:
+                    decision=raw_input("your journey seems too short for this feat. This also may be dued to incorrect profile settings.\n reload another journey(r), use blank locis(b), quit(q) : ")
+                    if(decision=="r"):
+                        raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
+                        locis=lociLoader()
+                        reportDatas(sol,ans,system,globalReport,locis,checker="y")
+                    if(decision=="q"):
+                        os._exit(1)
+                    else:
+                        currentLoci=["",""]
+                        locis=None
                 indexLoci+=1
             for image in bloc:
                 size=int(system["imagesSize"][image])
@@ -227,7 +239,8 @@ def printReports(globalReport,localReport):
         writer = csv.writer(f,delimiter=';')
         for l in localReport:
             l.extend(globalReport)
-            writer.writerow(l)   
+            writer.writerow(l)
+    print("\n congratulations, the report has appended to "+datas)
 
 def updateUuid(fileName):
     l=[]
@@ -280,7 +293,33 @@ def lociLoader():
         else:
             break
     return locis
-            
+
+
+def profileLoader(profileFile):
+    systemDic={}
+    try:
+        profile = dict(line.strip().split('=') for line in open(profileFile))
+    except:
+        raise Exception(profileFile+" not found")
+    key=""
+    if(feat=="w"):
+        key=str(feat)+str(row) # for words, the number of row is more relevant
+    else :
+        key=str(feat)+str(col)
+    if(key in profile):
+        system=profile[key]
+        systemDic["system"]=system
+        temp={}
+        limages=list(set(system)-set(','))
+        for image in limages:
+            try:
+                temp[image]=profile[image]
+            except:
+                raise Exception("no size affected to "+image)
+        systemDic["imagesSize"]=temp
+    else:
+        raise Exception("no system for this feat")
+    return systemDic
 
 if __name__ == "__main__":
     
@@ -339,22 +378,7 @@ if __name__ == "__main__":
         pr=raw_input("load profile (y/n) (default=n) : ")
         locis,systemDic=None,None
         if(pr=="y"):
-            profile = dict(line.strip().split('=') for line in open('profile.properties'))
-            key=""
-            if(feat=="w"):
-                key=str(feat)+str(row) # for words, the number of row is more relevant
-            else :
-                key=str(feat)+str(col)
-            if(key in profile):
-                system=profile[key]
-                systemDic={}
-                systemDic["system"]=system
-                temp={}
-                limages=list(set(system)-set(','))
-                for image in limages:
-                    temp[image]=profile[image]
-                systemDic["imagesSize"]=temp
-                
+            systemDic=profileLoader('profile.properties')                
         lo=raw_input("load journey (y/n) (default=n) : ")
         checker="n"
         if(lo=="y"):
