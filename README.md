@@ -1,10 +1,10 @@
 # MnemoTrain
 Scripts and statistical analysis related to the training for memory tournaments    
-If you are a wanderer, you should know that these memory feats are not as boring as it seems, have a look on this (wiki)[http://mt.artofmemory.com/wiki/Main_Page] to know more about this lost art    
+If you are a wanderer, you should know that these memory feats are not as boring as it seems, have a look on this [wiki](http://mt.artofmemory.com/wiki/Main_Page) to know more about this lost art    
 ## Notes :  
 - This is not intended to be a high quality repository (messy code, lack of documentation, bad file structure)
 - Tested on python2.7 32bits windows. 
-- The beloved *mainFeats.py* displays random words, numbers and binaries as well as automated correction, but for the moment does not store any personnal training data as reactionTime_training.py do.   
+- The beloved **mainFeats.py** displays random words, numbers and binaries as well as automated correction, but for the moment does not store any personnal training data as reactionTime_training.py do.   
 - spokenNumbers_audio.py won't work for a different OS than windows   
 - Audio files are in french.    
 - reactionTime_training.py implements a special mode for training reaction time (i.e remember the related image) : if the reaction time is above the desired goal, then the number is pushed back 4 to 7 spots later.      
