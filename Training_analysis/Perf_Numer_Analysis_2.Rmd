@@ -1,0 +1,92 @@
+Reaction Time analysis
+========================================================
+```{rsetup, echo=FALSE, cache=FALSE}
+## numbers >= 10^5 will be denoted in scientific notation,
+## and rounded to 2 digits
+options(scipen = 1, digits = 4)
+```
+## screening the datas
+```{r}
+library(ggplot2)
+graphics.off()
+t=read.csv2("../rawDatas/numbers.csv",sep=";",colClasses=c("factor","factor","numeric","factor","numeric","factor"),dec=".")
+```
+### no outlier filtering
+```{r}
+hist(t$time)
+var(t$time)
+mean(t$time)
+```
+### first buggy outlier filtering and item by item analysis
+```{r}
+outlierFilter=t$time<5
+t=t[outlierFilter,]
+means.t=tapply(t$time,t$item, mean)
+hist(means.t)
+vari=var(t$time)
+mean=mean(t$time)
+vari
+mean
+outlierBound=mean+2*sqrt(vari)
+outlierBound
+```
+### outlier filtering and means item by item analysis
+```{r}
+outlierFilter1=(t$time<outlierBound)&(t$time>0.45)
+t=t[outlierFilter1,]
+means.t=tapply(t$time,t$item, mean)
+var.t=tapply(t$time,t$item, var)
+hist(means.t)
+boxplot(means.t)
+stripchart(means.t, 
+            vertical = TRUE, method = "jitter", 
+            pch = 21, col = "maroon", bg = "bisque", 
+            add = TRUE) 
+sort(means.t)
+```
+#### small analysis : are doubles easier to react on ?
+```{r}
+doubles=c(00,11,22,33,44,55,66,77,88,99)
+Ldoubles=(t$item %in% doubles)
+Lnotdoubles=!Ldoubles
+t.doubles=t[Ldoubles,]
+t.notDoubles=t[Lnotdoubles,]
+mdoubles=tapply(t.doubles$time,t.doubles$item, mean)
+mnotDoubles=tapply(t.notDoubles$time,t.notDoubles$item, mean)
+t.test(mdoubles,mnotDoubles)
+```
+Not anymore, 99 was forgoten in past analysis
+# predictions based on the whole dataset
+## plot
+```{r}
+t$ind<-seq.int(nrow(t))
+plot(t$time)
+linearModel=lm(t$time~t$ind)
+abline(linearModel,col="red")
+```
+## predict
+```{r}
+intercept=coef(linearModel)["(Intercept)"]
+slope=coef(linearModel)["t$ind"]
+nbTrials=round((1-intercept)/slope-tail(t$ind, n=1),-2)
+```
+each time an item is viewed, the mean reaction time diminish of `r slope`, not that much then :)   
+At this rate `r nbTrials` new trials will be recquired to get a mean below 1s
+# predictions based on the last 1000 trials
+## plot
+```{r}
+tind2<-tail(t$ind, n=1000)
+ttime2<-tail(t$time, n=1000)
+plot(ttime2)
+linearModel=lm(ttime2~tind2)
+abline(linearModel,col="red")
+```
+## predict
+```{r}
+intercept=coef(linearModel)["(Intercept)"]
+slope=coef(linearModel)["tind2"]
+nbTrials=round((1-intercept)/slope-tail(tind2, n=1),-2)
+days=round(((1-intercept)/slope-tail(tind2, n=1))/1000,1)
+```
+each time an item is viewed, the mean reaction time diminish of `r slope`.
+At this rate `r nbTrials` new trials will be recquired to get a mean below 1s. With 1000 trials by day, it will need `r days` days. Maybe a more sharper training programm focused on weak element might allow a faster reach of the 1s threshold
