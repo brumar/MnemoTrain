@@ -147,7 +147,46 @@ t.test(mdoubles, mnotDoubles)
 ##     1.121     1.184
 ```
 
-Not anymore, 99 was forgoten in past analysis
+Not anymore, 99 was forgoten in previous script
+## unbiased mean reaction time of the last 1500 items
+
+The script which comes from the datas makes harder item more frequent
+
+```r
+time1500 <- tail(t$time, n = 1500)
+item1500 <- tail(t$item, n = 1500)
+means.time1500 = tapply(time1500, item1500, mean)
+sort(means.time1500)
+```
+
+```
+##     05     35     00     19     55     37     14     59     33     12 
+## 0.8321 0.8409 0.8483 0.8676 0.8774 0.8961 0.9071 0.9266 0.9335 0.9476 
+##     28     69     94     17     88     25     09     56     53     50 
+## 0.9499 0.9582 0.9651 0.9700 0.9724 0.9782 0.9795 0.9936 1.0038 1.0043 
+##     26     54     49     11     31     42     47     98     64     45 
+## 1.0055 1.0083 1.0158 1.0171 1.0191 1.0193 1.0296 1.0306 1.0331 1.0432 
+##     85     36     20     32     43     82     91     29     06     04 
+## 1.0478 1.0498 1.0528 1.0538 1.0572 1.0637 1.0637 1.0741 1.0760 1.0763 
+##     92     95     22     96     93     41     16     71     66     08 
+## 1.0794 1.0843 1.1055 1.1066 1.1077 1.1139 1.1182 1.1189 1.1216 1.1216 
+##     24     60     01     65     21     81     13     80     10     86 
+## 1.1221 1.1293 1.1322 1.1329 1.1412 1.1441 1.1488 1.1498 1.1514 1.1632 
+##     74     79     75     77     44     48     34     89     73     18 
+## 1.1717 1.1801 1.1833 1.1842 1.1909 1.2100 1.2186 1.2253 1.2261 1.2277 
+##     03     97     51     57     02     38     78     23     72     46 
+## 1.2328 1.2516 1.2553 1.2611 1.2625 1.2645 1.2648 1.2739 1.2778 1.2803 
+##     90     30     15     61     07     83     87     52     58     63 
+## 1.2992 1.3007 1.3037 1.3049 1.3051 1.3177 1.3314 1.3360 1.3488 1.3578 
+##     39     68     70     76     62     99     27     84     40     67 
+## 1.3619 1.3623 1.3635 1.3940 1.4015 1.4396 1.4500 1.4639 1.4688 1.5403
+```
+
+```r
+mm = mean(means.time1500)
+```
+
+The unbiased mean reaction time across the last 1500 trials is evaluated at 1.1408
 # predictions based on the whole dataset
 ## plot
 
@@ -158,7 +197,7 @@ linearModel = lm(t$time ~ t$ind)
 abline(linearModel, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7.png) 
 
 ## predict
 
@@ -181,7 +220,7 @@ linearModel = lm(ttime2 ~ tind2)
 abline(linearModel, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8.png) 
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9.png) 
 
 ## predict
 
@@ -193,4 +232,4 @@ days = round(((1 - intercept)/slope - tail(tind2, n = 1))/1000, 1)
 ```
 
 each time an item is viewed, the mean reaction time diminish of -1.2037 &times; 10<sup>-5</sup>.
-At this rate 12600 new trials will be recquired to get a mean below 1s. With 1000 trials by day, it will need 12.6 days. 
+At this rate 12600 new trials will be recquired to get a mean below 1s. With 1000 trials by day, it will need 12.6 days. Maybe a more sharper training programm focused on weak element might allow a faster reach of the 1s threshold

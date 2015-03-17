@@ -8,6 +8,7 @@ If you are a wanderer, you should know that these memory feats are not as boring
 - spokenNumbers_audio.py won't work for a different OS than windows   
 - Audio files are in french.    
 - reactionTime_training.py implements a special mode for training reaction time (i.e remember the related image) : if the reaction time is above the desired goal, then the number is pushed back 4 to 7 spots later.      
-- The statistical analysis is realised with R, a free and open source data analysis software. The HTML is built with knitr. You can check the html generated at http://htmlpreview.github.io/?https://github.com/brumar/MnemoTrain/blob/master/Training_analysis/Perf_Numer_Analysis.html
+- The statistical analysis is realised with R, a free and open source data analysis software. The HTML is built with knitr. 
+You can have a look on these analysis [this one] (http://htmlpreview.github.io/?https://github.com/brumar/MnemoTrain/blob/master/Training_analysis/Perf_Numer_Analysis.html) or  [this one] (http://htmlpreview.github.io/?https://github.com/brumar/MnemoTrain/blob/master/Training_analysis/Perf_Numer_Analysis_2.html) 
 
 Feel free to adapt these scripts to your needs.

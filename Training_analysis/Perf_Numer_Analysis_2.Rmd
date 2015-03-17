@@ -55,7 +55,18 @@ mdoubles=tapply(t.doubles$time,t.doubles$item, mean)
 mnotDoubles=tapply(t.notDoubles$time,t.notDoubles$item, mean)
 t.test(mdoubles,mnotDoubles)
 ```
-Not anymore, 99 was forgoten in past analysis
+Not anymore, 99 was forgoten in previous script
+## unbiased mean reaction time of the last 1500 items
+
+The script which comes from the datas makes harder item more frequent
+```{r}
+time1500<-tail(t$time, n=1500)
+item1500<-tail(t$item, n=1500)
+means.time1500=tapply(time1500,item1500, mean)
+sort(means.time1500)
+mm=mean(means.time1500)
+```
+The unbiased mean reaction time across the last 1500 trials is evaluated at `r mm`
 # predictions based on the whole dataset
 ## plot
 ```{r}
