@@ -6,6 +6,13 @@ import csv
 from os import listdir
 from os.path import isfile, join
 from feats import *
+import uuid
+
+#TODO
+
+#custom user error repot (writing error)
+#go directly to restitution
+#pouvoir abandonner le chargement des locis
 
 locipath="./Loci"
 datas="./rawDatas/feats.csv"
@@ -24,6 +31,7 @@ def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False)
     cont=True
     localReport=[]
     spot=0
+    lastLoci=["",""]
     #if loci is not defined, default values avoiding bugs
     if(locis==None):
         indexLoci=""
@@ -59,10 +67,11 @@ def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False)
                 solution=''.join(solution)
                 correct=(answer==solution)
                 localReport.append([answer,solution,correct,image,currentLoci[0],currentLoci[1],b,indexLoci,spot])
+                lastLoci=currentLoci
                 #print(answer,sol,currentLoci)
                 indexAns+=size
     if(checker=="y")and(locis!=None):
-        checked=raw_input("the last loci you used was %s, containing %s, right ? (y/n) : "%(currentLoci[1],solution))
+        checked=raw_input("the last loci you used was %s, containing %s, right ? (y/n) : "%(lastLoci[1],solution))#lastLoci = Trick to avoid strange bug
         if(checked=="n"):
             raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
             locis=lociLoader()
@@ -126,7 +135,7 @@ def lociLoader():
                     locis.append(r)
         
         if(startingIndex!=0):
-            okloc=raw_input('the first loci was "'+str(locis[startingIndex][1])+'" ok ? (y/n) (default=y): ')
+            okloc=raw_input('the first loci was "'+str(locis[0][1])+'" ok ? (y/n) (default=y): ')
             if(okloc!="n"):#if no, we continue to loop in loci selection
                 break
         else:
@@ -189,13 +198,13 @@ if __name__ == "__main__":
     mt=raw_input("how much time (s) (default=%ds) : "%memoTime)
     rt=raw_input("how much time to write (s) (default=%ds) : "%restiTime)
     
-    if (mt!=""): maxTime=float(mt)
+    if (mt!=""): memoTime=float(mt)
     if (rt!=""): restiTime=float(rt)
     if (nr!=""): row=int(nr)
     if (nc!=""): col=int(nc)
     if (sepN!=""): sep=int(sepN)
   
-    memoTime=2    
+    #memoTime=2    
     #sep,row,col,memoTime,restiTime,sepSign=2,40,20,300,900
     if(feat=="b"):
         ff=Binaries(row, col,memoTime,restiTime,sepSign,sep,"bin_temp.txt",indent=5)
