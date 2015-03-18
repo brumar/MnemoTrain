@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import random
 import time
 import os
@@ -13,6 +15,7 @@ import uuid
 #custom user error repot (writing error)
 #go directly to restitution
 #pouvoir abandonner le chargement des locis
+#voir les index des locis
 
 locipath="./Loci"
 datas="./rawDatas/feats.csv"
@@ -109,38 +112,36 @@ def updateUuid(fileName):
         for lr in l:
             writer.writerow(lr)
 
+
 def lociLoader():
-    while True:
-        lociFiles = [ f for f in listdir(locipath) if (isfile(join(locipath,f))and f[-4:]==".csv" )]
-        message="load options : "
-        for i,lf in enumerate(lociFiles):
-            message+="\n -"+lf+"("+str(i)+") "
+    lociFiles = [ f for f in listdir(locipath) if (isfile(join(locipath,f))and f[-4:]==".csv" )]
+    message="load options : "
+    for i,lf in enumerate(lociFiles):
+        message+="\n -"+lf+"("+str(i)+") "
+    message+="\n choice : "
+    il=raw_input(message)
+    chosenFile=lociFiles[int(il)]
+    fileName=join(locipath,chosenFile)
+    updateUuid(fileName)
+    locis=buildLociFromFile(fileName)
+    specific=raw_input("this journey contains %d locis, do you want to start at a specific loci (y/n) default=n : "%len(locis))
+    cp=1
+    if(specific=="y"):
+        message="index : "
+        for indexLoc,loc in enumerate(locis):
+            message+="\n -"+loc[1]+"("+str(indexLoc+1)+") "
         message+="\n choice : "
-        il=raw_input(message)
-        chosenFile=lociFiles[int(il)]
-        fileName=join(locipath,chosenFile)
-        updateUuid(fileName)
-        locis=[]
-        startingIndex=raw_input("starting index (default=0) : ")
-        if(startingIndex!=""):
-            startingIndex=int(startingIndex)
-            
-        if(startingIndex==""):
-            startingIndex=0
-            
-        with open(fileName, 'rb') as csvfile: #read
-            spamreader = csv.reader(csvfile, delimiter=';')
-            for i,r in enumerate(spamreader):
-                if(i>startingIndex-1):
-                    locis.append(r)
-        
-        if(startingIndex!=0):
-            okloc=raw_input('the first loci was "'+str(locis[0][1])+'" ok ? (y/n) (default=y): ')
-            if(okloc!="n"):#if no, we continue to loop in loci selection
-                break
-        else:
-            break
-    return locis
+        chosenPosition=raw_input(message)
+        cp=int(chosenPosition)
+    return locis[cp-1:]
+
+def buildLociFromFile(filename):
+    locis=[]               
+    with open(filename, 'rb') as csvfile: #read
+        spamreader = csv.reader(csvfile, delimiter=';')
+        for i,r in enumerate(spamreader):
+            locis.append(r)
+        return locis
 
 
 def profileLoader(profileFile):
@@ -204,7 +205,7 @@ if __name__ == "__main__":
     if (nc!=""): col=int(nc)
     if (sepN!=""): sep=int(sepN)
   
-    #memoTime=2    
+    #memoTime=2    #commented line for debugging purpose
     #sep,row,col,memoTime,restiTime,sepSign=2,40,20,300,900
     if(feat=="b"):
         ff=Binaries(row, col,memoTime,restiTime,sepSign,sep,"bin_temp.txt",indent=5)
