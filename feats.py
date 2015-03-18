@@ -34,6 +34,7 @@ class Feat:
     def proceed(self):
         """Proceed to the feat
         """
+        self.waiter(self.nbRows)
         self.build_table_solution()
         self.print_table(self.nbRows)
         print("\n"*9)
@@ -50,6 +51,20 @@ class Feat:
             self.print_debrief(errors,points,nlines,timeElapsed)
         return self.solution,self.answer
 
+    def waiter(self,nR):
+        time.sleep(1)
+        self.printNumber("3")
+        time.sleep(1)
+        self.printNumber("2")
+        time.sleep(1)
+        self.printNumber("1")
+        time.sleep(1)
+        
+    def printNumber(self,ms):
+        print "\n" * 20
+        print "            "+ms
+        print "\n" * 19
+        
     def createAndOpenSheet(self):
         """ Open a temp file as a recall sheet
         """
