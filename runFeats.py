@@ -106,7 +106,7 @@ def updateUuid(fileName):
             else:
                 lr.extend(row)
             l.append(lr)
-                
+
     with open(fileName, 'wb') as f: #overwrite
         writer = csv.writer(f,delimiter=';')
         for lr in l:
@@ -136,7 +136,7 @@ def lociLoader():
     return locis[cp-1:]
 
 def buildLociFromFile(filename):
-    locis=[]               
+    locis=[]
     with open(filename, 'rb') as csvfile: #read
         spamreader = csv.reader(csvfile, delimiter=';')
         for i,r in enumerate(spamreader):
@@ -171,15 +171,15 @@ def profileLoader(profileFile):
     return systemDic
 
 if __name__ == "__main__":
-    
+
     feat=raw_input("pick your feat (d=digits,b=binaries,w=words,h=historicalDates) : ")
     if(feat=="")or(feat=="d"):
         feat="d"
         sep,row,col,memoTime,restiTime,sepSign=2,20,40,300,900,"|"
-        
+
     if(feat=="h"):
         sep,row,col,memoTime,restiTime,sepSign=1,60,1,300,900,"|"
-        
+
     if(feat=="w"):
         freqMax=raw_input("N th Most frequent words (no if no limit, default=8000) : ")
         if(freqMax==""):
@@ -187,25 +187,25 @@ if __name__ == "__main__":
         else:
             freqMax=int(freqMax)
         sep,row,col,memoTime,restiTime,sepSign=1,20,5,300,900,"|"
-        
+
     if(feat=="b"):
         sep,row,col,memoTime,restiTime,sepSign=6,25,30,300,900,"|"
-        
+
     else:
         sepN=raw_input("separaters every N items (default=%d) : "%sep)
-        
+
     nr=raw_input("how many rows (default=%d) : "%row)
     nc=raw_input("how many cols (default=%d) : "%col)
     mt=raw_input("how much time (s) (default=%ds) : "%memoTime)
     rt=raw_input("how much time to write (s) (default=%ds) : "%restiTime)
-    
+
     if (mt!=""): memoTime=float(mt)
     if (rt!=""): restiTime=float(rt)
     if (nr!=""): row=int(nr)
     if (nc!=""): col=int(nc)
     if (sepN!=""): sep=int(sepN)
-  
-    #memoTime=2    #commented line for debugging purpose
+
+    memoTime=2    #commented line for debugging purpose
     #sep,row,col,memoTime,restiTime,sepSign=2,40,20,300,900
     if(feat=="b"):
         ff=Binaries(row, col,memoTime,restiTime,sepSign,sep,"bin_temp.txt",indent=5)
@@ -215,23 +215,23 @@ if __name__ == "__main__":
         ff=Numbers(row, col,memoTime,restiTime,sepSign,sep,"num_temp.txt",indent=5)
     if(feat=="h"):
         ff=Dates(row, col,memoTime,restiTime,sepSign,sep,"dates_temp.txt",indent=5)
-    [solution,answer]=ff.proceed()
+    [solution,answer,attempt]=ff.proceed()
     report=raw_input("report results (y/n) (default=n) : ")
-    
+
     if(report=="y"):
         pr=raw_input("load profile (y/n) (default=n) : ")
         locis,systemDic=None,None
         if(pr=="y"):
-            systemDic=profileLoader('profile.properties')                
+            systemDic=profileLoader('profile.properties')
         lo=raw_input("load journey (y/n) (default=n) : ")
         checker="n"
         if(lo=="y"):
-            locis=lociLoader()             
+            locis=lociLoader()
             checker=raw_input("proceed to loci checker (advised) (y/n) (default=y) : ")
             if(checker==""):
                 checker="y"
         if(systemDic!=None):
-            globalReport=[feat,str(row), str(col),str(memoTime),str(restiTime),sepSign,str(round(time.time()))]
+            globalReport=[attempt,feat,str(row), str(col),str(memoTime),str(restiTime),sepSign,str(round(time.time()))]
             reportDatas(solution,answer,systemDic,globalReport,locis,checker,ff.revert)
-        
+
 

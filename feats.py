@@ -47,9 +47,9 @@ class Feat:
         if(do=="l"):
             timeElapsed=round(time.clock()-timeResti)
             self.answer=self.buildAnswerFromFile(self.tempFile)
-            [errors,points,nlines]=self.compareSolutionAnswer(self.solution,self.answer)
+            [errors,points,nlines,attempt]=self.compareSolutionAnswer(self.solution,self.answer)
             self.print_debrief(errors,points,nlines,timeElapsed)
-        return self.solution,self.answer
+        return self.solution,self.answer,attempt
 
     def waiter(self,nR):
         time.sleep(1)
@@ -59,12 +59,12 @@ class Feat:
         time.sleep(1)
         self.printNumber("1")
         time.sleep(1)
-        
+
     def printNumber(self,ms):
         print "\n" * 20
         print "            "+ms
         print "\n" * 19
-        
+
     def createAndOpenSheet(self):
         """ Open a temp file as a recall sheet
         """
@@ -80,12 +80,12 @@ class Feat:
         print("you got "+str(points)+" points")
         print("remaining restitution time : "+str(self.restiTime-timeElapsed))+" s"
         message2="feat : %s, memotime : %s, points : %s \n"%(str(self.__class__.__name__),str(self.memoTime),str(points))
-        f2.write(message2)      
+        f2.write(message2)
         for error in errors:
             if(len(error)==4):
                 print "at line %d,column %d you wrote %s instead of %s"  % (error[0], error[1],error[2],error[3])
             elif (len(error)==3):
-                print "at line %d you wrote %s instead of %s"  % (error[0], error[1],error[2])                
+                print "at line %d you wrote %s instead of %s"  % (error[0], error[1],error[2])
 
     def print_table(self,nR):
         """ Display the table of the elements to be learned
@@ -96,11 +96,11 @@ class Feat:
             nR=len(lines)#dirty to avoid complications
         for l in range(nR):
             print(lines[l])
-            
+
     def build_table_solution(self):
         """ Build the displayed table of the items to be learned
             and build the solution vector"""
-        
+
         self.solution=[] # might be redundant
         self.table=""
         for r in range(self.nbRows):
@@ -147,13 +147,14 @@ class Feat:
                         lanswer.extend(element)
                 answer.append(lanswer)
         return answer
-            
+
 
     def compareSolutionAnswer(self,lsol,lansw):
         """ compare the recall file with the target, count the points and raise the errors"""
         indexL=0
         points=0
         errors=[]
+        attempt=0
         if(self.revert): # columns are taken as lines in order to compare columns by columns
             lsol=zip(*lsol)
             lansw=zip(*lansw)
@@ -161,6 +162,7 @@ class Feat:
             lineErrors=0
             indexCol=0
             for item in linAns:
+                attempt+=1
                 if(lsol[indexL][indexCol]!=item):
                     errorReport=[indexL,indexCol,item,lsol[indexL][indexCol]]
                     errors.append(errorReport)
@@ -170,13 +172,13 @@ class Feat:
                 points+=indexCol/2
             else:
                 if lineErrors==0:
-                  points+=indexCol  
+                    points+=indexCol
             indexL+=1
-        return(errors,points,indexL)
-    
+        return(errors,points,indexL,attempt)
+
 class Dates(Feat):
     def __init__(self, nbRows, lengthColumn,memoTime,restiTime,separator="|",separatorPlaceHolder=2,tempFile="temp.txt",indent=5,freqMax=8000,dico='./dates/13jan.csv',sizeCell=20,blocMode=True,revert=True):
-        Feat.__init__(self, nbRows, lengthColumn,memoTime,restiTime,sizeCell,separator,separatorPlaceHolder,tempFile,indent,blocMode=True)    
+        Feat.__init__(self, nbRows, lengthColumn,memoTime,restiTime,sizeCell,separator,separatorPlaceHolder,tempFile,indent,blocMode=True)
         self.dates=[]
         self.readDic(dico)#put 2 extra arguments + sizecell=20
     def readDic(self,dictionnary):
@@ -184,7 +186,7 @@ class Dates(Feat):
             spamreader = csv.reader(csvfile, delimiter=';', quotechar='"')
             for r,row in enumerate(spamreader):
                 self.dates.extend(row)
-                
+
     def generateItem(self):
         date=str(random.randint(1000, 2099))
         label=random.choice(self.dates)
@@ -214,6 +216,7 @@ class Dates(Feat):
         indexL=0
         points=0
         errors=[]
+        atempt=0
         for linAns in lansw:
             lineErrors=0
             indexCol=0
@@ -223,6 +226,7 @@ class Dates(Feat):
                 if digit==self.separator:
                     break
             if(date!=self.separator):
+                atempt+=1
                 if(lsol[indexL]!=date):
                     errorReport=[indexL,date,lsol[indexL]]
                     errors.append(errorReport)
@@ -230,8 +234,8 @@ class Dates(Feat):
                 else:
                     points+=1
             indexL+=1
-        return(errors,points,indexL)
-                
+        return(errors,points,indexL,atempt)
+
 class Numbers(Feat):
     def __init__(self, nbRows, lengthColumn,memoTime,restiTime,separator="|",separatorPlaceHolder=2,tempFile="temp.txt",indent=5,sizeCell=None,blocMode=False):
         Feat.__init__(self, nbRows, lengthColumn,memoTime,restiTime,sizeCell,separator,separatorPlaceHolder,tempFile,indent,blocMode)
@@ -264,7 +268,7 @@ class Words(Feat):
                     self.nouns.append(row[1])
                 if(row[0]=="v"):
                     self.verbs.append(row[1])
-                    
+
     def generateItem(self):
         if(random.randint(0, 9)==9):
             return random.choice(self.verbs)
