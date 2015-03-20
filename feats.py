@@ -78,7 +78,8 @@ class Feat:
         self.print_table(nl)
         print("\n")
         print("you got "+str(points)+" points")
-        print("remaining restitution time : "+str(self.restiTime-timeElapsed))+" s"
+        print("remaining restitution time : "+str(self.restiTime-timeElapsed)+" s")
+        print("if you load your profile, you can get more readable reports")
         message2="feat : %s, memotime : %s, points : %s \n"%(str(self.__class__.__name__),str(self.memoTime),str(points))
         f2.write(message2)
         for error in errors:

@@ -21,7 +21,7 @@ locipath="./Loci"
 datas="./rawDatas/feats.csv"
 f2=open('./rawDatas/global.txt', 'a') #print globalMessages
 
-def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False):
+def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False): #too complex
     if(revert): # columns are taken as lines in order to compare columns by columns
         sol=zip(*sol)
         ans=zip(*ans)
@@ -51,12 +51,11 @@ def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False)
                     if(decision=="r"):
                         raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
                         locis=lociLoader()
-                        reportDatas(sol,ans,system,globalReport,locis,checker="y")
+                        reportDatas(sol,ans,system,globalReport,locis,checker="y") # restart with new locis
+                        return
                     if(decision=="q"):
-                        os._exit(1)
-                    else:
                         currentLoci=["",""]
-                        locis=None
+                        locis=None #with locis = None, we never enter this loci block
                 indexLoci+=1
             for image in bloc:
                 size=int(system["imagesSize"][image])
@@ -70,8 +69,9 @@ def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False)
                 solution=''.join(solution)
                 correct=(answer==solution)
                 localReport.append([answer,solution,correct,image,currentLoci[0],currentLoci[1],b,indexLoci,spot])
+                if(correct==False):
+                    print("at %s (loci %d), %s was %s, not %s"%(currentLoci[1],indexLoci,image,solution,answer) )
                 lastLoci=currentLoci
-                #print(answer,sol,currentLoci)
                 indexAns+=size
     if(checker=="y")and(locis!=None):
         checked=raw_input("the last loci you used was %s, containing %s, right ? (y/n) : "%(lastLoci[1],solution))#lastLoci = Trick to avoid strange bug
@@ -118,8 +118,11 @@ def lociLoader():
     message="load options : "
     for i,lf in enumerate(lociFiles):
         message+="\n -"+lf+"("+str(i)+") "
+    message+="\n quit loading locis (q)"
     message+="\n choice : "
     il=raw_input(message)
+    if il=="q":
+        return None
     chosenFile=lociFiles[int(il)]
     fileName=join(locipath,chosenFile)
     updateUuid(fileName)
