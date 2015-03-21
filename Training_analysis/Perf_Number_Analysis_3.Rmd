@@ -1,0 +1,100 @@
+Reaction Time analysis
+========================================================
+  ```{rsetup, echo=FALSE, cache=FALSE}
+## numbers >= 10^5 will be denoted in scientific notation,
+## and rounded to 2 digits
+options(scipen = 1, digits = 4)
+```
+
+```{recho=FALSE,}
+library(ggplot2)
+graphics.off()
+t=read.csv2("../rawDatas/numbers.csv",sep=";",colClasses=c("factor","factor","numeric","factor","numeric","factor"),dec=".")
+outlierFilter=t$time<5
+t=t[outlierFilter,]
+means.t=tapply(t$time,t$item, mean)
+hist(means.t)
+vari=var(t$time)
+mean=mean(t$time)
+outlierBound=mean+2*sqrt(vari)
+outlierFilter1=(t$time<outlierBound)&(t$time>0.45)
+t=t[outlierFilter1,]
+means.t=tapply(t$time,t$item, mean)
+var.t=tapply(t$time,t$item, var)
+```
+## analysis after outliers filtering
+```{r}
+hist(means.t)
+boxplot(means.t)
+stripchart(means.t, 
+           vertical = TRUE, method = "jitter", 
+           pch = 21, col = "maroon", bg = "bisque", 
+           add = TRUE) 
+sort(means.t)
+```
+
+The unbiased mean reaction time across the last 1500 trials is evaluated at `r mm`
+## unbiased mean reaction time of the last 1000 items
+
+The script which comes from the datas makes harder item more frequent
+```{r}
+time1000<-tail(t$time, n=1000)
+item1000<-tail(t$item, n=1000)
+means.time1000=tapply(time1000,item1000, mean)
+sort(means.time1000)
+mm=mean(means.time1000)
+```
+The unbiased mean reaction time across the last 1000 trials is evaluated at `r mm`
+# predictions based on the whole dataset
+## plot
+```{r}
+t$ind<-seq.int(nrow(t))
+plot(t$time)
+linearModel=lm(t$time~t$ind)
+abline(linearModel,col="red")
+```
+## predict
+```{r}
+intercept=coef(linearModel)["(Intercept)"]
+slope=coef(linearModel)["t$ind"]
+nbTrials=round((1-intercept)/slope-tail(t$ind, n=1),-2)
+```
+each time an item is viewed, the mean reaction time diminish of `r slope`, not that much then :)   
+At this rate `r nbTrials` new trials will be recquired to get a mean below 1s
+# predictions based on the last 1000 trials
+## plot
+```{r}
+tind2<-tail(t$ind, n=1000)
+ttime2<-tail(t$time, n=1000)
+plot(ttime2)
+l5=lm(ttime2~tind2)
+coef(l5)
+abline(l5,col="blue")
+```
+## predict
+```{r}
+intercept=coef(linearModel)["(Intercept)"]
+slope=coef(linearModel)["tind2"]
+nbTrials=round((1-intercept)/slope-tail(tind2, n=1),-2)
+days=round(((1-intercept)/slope-tail(tind2, n=1))/1000,1)
+```
+each time an item is viewed, the mean reaction time diminish of `r slope`.
+At this rate `r nbTrials` new trials will be recquired to get a mean below 1s. With 1000 trials by day, it will need `r days` days. Maybe a more sharper training programm focused on weak element might allow a faster reach of the 1s threshold
+
+# is the challenge to get below 1s after a week is completed ?
+According the the other plots, it is not.
+## more precise analysis : means for each item based on their 3 last reaction time.
+```{r}
+n=3
+means.tLast4=tapply(t$time,t$item, function(i) mean(tail(i, n)))
+sort(means.tLast4)
+m=mean(means.tLast4)
+m
+```
+We got a mean equal to `r m` s. This slightly above the goal :(   
+20 March : challenge (almost) not reached !
+
+## Note to myself
+Correlation analysis is a stupid way to predict how the mean is evolving. It's very clear that the real mean reaction time is below the line, the reason is that correlation analysis is based on mean squared error estimations, for this reasons, harder items weight much more than easy items (which have less discrepancy).   
+Least mean square is suitable to predict individual points, but not suited for the means. 
+All these predictive analysis should be replaced by linear regression over the unbiased mean reaction time instead of biased individual points (harder items are over represented)
