@@ -70,10 +70,11 @@ def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,c
                 correct=(answer==solution)
                 er=""
                 if(correct==False):
-                    print("at %s (loci %d), %s was %s, not %s"%(currentLoci[1],indexLoci,image,solution,answer) )
                     if(errorDic!=None):
-                        message=errorsPickerMessage(errorDic)+"\n you can also write a new error \n\n your choice : "
-                        er=raw_input(message)
+                        message=errorsPickerMessage(errorDic)+"\n you can also write a new error \n"
+                        print(message)
+                        print("Error : at %s (loci %d), %s was %s, not %s"%(currentLoci[1],indexLoci,image,solution,answer) )
+                        er=raw_input("your choice : ")
                         try:
                             ide=int(er)
                             if ide in (errorDic["index"]).keys():
