@@ -21,7 +21,7 @@ locipath="./Loci"
 datas="./rawDatas/feats.csv"
 f2=open('./rawDatas/global.txt', 'a') #print globalMessages
 
-def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False): #too complex
+def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,checker="n",revert=False): #too complex
     if(revert): # columns are taken as lines in order to compare columns by columns
         sol=zip(*sol)
         ans=zip(*ans)
@@ -51,7 +51,7 @@ def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False)
                     if(decision=="r"):
                         raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
                         locis=lociLoader()
-                        reportDatas(sol,ans,system,globalReport,locis,checker="y") # restart with new locis
+                        reportDatas(sol,ans,system,errorDic,globalReport,locis,checker="y") # restart with new locis
                         return
                     if(decision=="q"):
                         currentLoci=["",""]
@@ -68,9 +68,19 @@ def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False)
                 answer=''.join(answer)
                 solution=''.join(solution)
                 correct=(answer==solution)
-                localReport.append([answer,solution,correct,image,currentLoci[0],currentLoci[1],b,indexLoci,spot])
+                er=""
                 if(correct==False):
                     print("at %s (loci %d), %s was %s, not %s"%(currentLoci[1],indexLoci,image,solution,answer) )
+                    if(errorDic!=None):
+                        message=errorsPickerMessage(errorDic)+"\n you can also write a new error \n\n your choice : "
+                        er=raw_input(message)
+                        try:
+                            ide=int(er)
+                            if ide in (errorDic["index"]).keys():
+                                er=errorDic["index"][ide]
+                        except :
+                            pass
+                localReport.append([answer,solution,correct,er,image,currentLoci[0],currentLoci[1],b,indexLoci,spot])
                 lastLoci=currentLoci
                 indexAns+=size
     if(checker=="y")and(locis!=None):
@@ -78,7 +88,7 @@ def reportDatas(sol,ans,system,globalReport,locis=None,checker="n",revert=False)
         if(checked=="n"):
             raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
             locis=lociLoader()
-            reportDatas(sol,ans,system,globalReport,locis,checker="y")
+            reportDatas(sol,ans,system,errorDic,globalReport,locis,checker="y")
         else:
             printReports(globalReport,localReport)
     else:
@@ -173,6 +183,30 @@ def profileLoader(profileFile):
         raise Exception("no system for this feat")
     return systemDic
 
+def errorsLoader(errorsFile):
+    errors={}
+    try:
+        errors = dict(line.strip().split('=') for line in open(errorsFile))
+    except:
+        raise Exception(errorsFile+" not found")
+    errors["index"]={}
+    for e,error in enumerate(errors.keys()):
+        if(e!="index"):
+            errors["index"][e]=error;
+        # this dic is usefull for letting the user pick an error with an index
+    return errors
+
+def errorsPickerMessage(errorsDic): #message is "describe" or "select"
+    # TODO:  an enumeration would be better
+    message=""
+    for error,description in errorsDic.iteritems():
+        if(error!="index"):
+            message+="%s : %s \n"%(error,description)
+    message+="\n"
+    for i,error in (errorsDic["index"]).iteritems():
+        message+="%s (%d)\n"%(error,i)
+    return message
+
 if __name__ == "__main__":
 
     feat=raw_input("pick your feat (d=digits,b=binaries,w=words,h=historicalDates) : ")
@@ -222,19 +256,22 @@ if __name__ == "__main__":
     report=raw_input("report results (y/n) (default=n) : ")
 
     if(report=="y"):
-        pr=raw_input("load profile (y/n) (default=n) : ")
-        locis,systemDic=None,None
-        if(pr=="y"):
+        pr=raw_input("load profile (y/n) (default=y) : ")
+        locis,systemDic,errorsDic=None,None,None
+        if(pr!="n"):
             systemDic=profileLoader('profile.properties')
-        lo=raw_input("load journey (y/n) (default=n) : ")
+        ed=raw_input("load errors Dic (y/n) (default=y) : ")
+        if(ed!="n"):
+            errorsDic=errorsLoader('errors.properties')
+        lo=raw_input("load journey (y/n) (default=y) : ")
         checker="n"
-        if(lo=="y"):
+        if(lo!="n"):
             locis=lociLoader()
             checker=raw_input("proceed to loci checker (advised) (y/n) (default=y) : ")
             if(checker==""):
                 checker="y"
         if(systemDic!=None):
             globalReport=[attempt,feat,str(row), str(col),str(memoTime),str(restiTime),sepSign,str(round(time.time()))]
-            reportDatas(solution,answer,systemDic,globalReport,locis,checker,ff.revert)
+            reportDatas(solution,answer,systemDic,errorsDic,globalReport,locis,checker,ff.revert)
 
 
