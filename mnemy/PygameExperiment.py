@@ -31,12 +31,7 @@ time_highlight = 500
 class PygameExperiment():
 
     def __init__(self, filename=None, subject = "John Doe", debug = False,system="PA"):
-        pg.init()
-        pg.mouse.set_visible(False)
-        self.debug = debug
-        self.screen = pg.display.set_mode([0,0], pg.FULLSCREEN | pg.DOUBLEBUF)
-        self.screen_w, self.screen_h = self.screen.get_size()
-        self.screen_center = (self.screen_w/2, self.screen_h/2)
+        self.debub=debug
         self.data_file = filename
         self.subject = subject
         self.background_color = background_color
@@ -51,8 +46,16 @@ class PygameExperiment():
         self.collection = None
         self.rToutput=open('./rawDatas/reactionTimes.csv', 'a')#temp
         self.system=system
+        self.solution=[]
+        self.viewingTime=0
         #Image    indexItem    timestamp    time    item    context    extra_1    extra_2
 
+    def pgInit(self):
+        pg.init()
+        pg.mouse.set_visible(False)
+        self.screen = pg.display.set_mode([0,0], pg.FULLSCREEN | pg.DOUBLEBUF)
+        self.screen_w, self.screen_h = self.screen.get_size()
+        self.screen_center = (self.screen_w/2, self.screen_h/2)
 
     def ending(self):
         self.write("Total time : " + str(pg.time.get_ticks()-self.starting_time))
@@ -315,6 +318,7 @@ class PygameExperiment():
 
 
     def freeDisplay(self,nbDisplay):
+        self.pgInit()
         # nb display is now an argument
         # will work only for pictures
         textual = self.collection.isText
@@ -346,13 +350,16 @@ class PygameExperiment():
                         c = False
                         break
 
-    def explore(self, can_quit = False, record = True, startPos = 1):
+    def explore(self, can_quit = True, record = True, startPos = 1):
+        self.pgInit()
         assert self.has_collection()
         nbDisplay = self.collection.nb_display
         textual = self.collection.isText == True
         toExplore = self.collection.elements
         if not(textual):
             pictures = self.collection.pictures
+            for picture in pictures:
+                self.solution.append(self.pictureToTextNotation(picture))
         pos = startPos
         c = True
         lastPos = int(len(toExplore)/nbDisplay)
@@ -370,7 +377,7 @@ class PygameExperiment():
                 self.write_instruction(toExplore[(pos-1)*nbDisplay:(pos)*nbDisplay], self.font_stimuli)
 
             else:
-                if((pos+1)*nbDisplay<len(pictures)):
+                if((pos+1)*nbDisplay-1<len(pictures)):
          # handle the case of the number of cards don't fit with the system.
                     self.display_pictures(pictures[(pos-1)*nbDisplay:(pos)*nbDisplay])
                 else:
@@ -402,6 +409,7 @@ class PygameExperiment():
                     if can_quit:
                         if (event.key == pg.K_ESCAPE):
                             raise Exception()
+            self.viewingTime=pg.time.get_ticks()-start
             self.save_proc()
 
         total_time = pg.time.get_ticks()-start
