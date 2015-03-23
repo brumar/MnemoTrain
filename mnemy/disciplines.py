@@ -216,7 +216,10 @@ def errorsPickerMessage(errorsDic): #message is "describe" or "select"
 class Feat:
     """Class implementing the most important features of each feats
     """
-    def __init__(self, nbRows, lengthColumn,memoTime,restiTime,sizeCell=None,separator="",separatorPlaceHolder=2,tempFile="temp.txt",indent=5,blocMode=False,revert=False):
+    def __init__(self, nbRows, lengthColumn,memoTime,
+                 restiTime,sizeCell=None,separator="",
+                 separatorPlaceHolder=2,tempFile="temp.txt",indent=5,
+                 blocMode=False,revert=False,longestStreak=False):
         self.nbRows = nbRows
         self.lengthColumn= lengthColumn
         self.memoTime = memoTime
@@ -232,6 +235,7 @@ class Feat:
         self.blocMode=blocMode
         self.revert=revert
         self.attempt=0
+        self.longestStreak=longestStreak
 
     def proceed(self):
         """Proceed to the feat
@@ -303,6 +307,8 @@ class Feat:
         points=0
         errors=[]
         attempt=0
+        noError=True #usefull for speed cards only
+        LstStreak=-1
         if(self.revert): # columns are taken as lines in order to compare columns by columns
             lsol=zip(*lsol)
             lansw=zip(*lansw)
@@ -314,6 +320,9 @@ class Feat:
                 if(lsol[indexL][indexCol]!=item):
                     errorReport=[indexL,indexCol,item,lsol[indexL][indexCol]]
                     errors.append(errorReport)
+                    if( noError):
+                        LstStreak=attempt-1
+                        noError=False
                     lineErrors+=1
                 indexCol+=1
             if lineErrors==1:
@@ -322,11 +331,24 @@ class Feat:
                 if lineErrors==0:
                     points+=indexCol
             indexL+=1
+            if(self.longestStreak):
+                points=LstStreak
         return(errors,points,indexL,attempt)
 
     def print_debrief(self,errors,points,nl,timeElapsed):
         """ Display User friendly outputs
         """
+        self.globalMessages(nl,points,timeElapsed)
+        self.printErrors(errors)
+
+    def printErrors(self,errors):
+        for error in errors:
+            if(len(error)==4):
+                print "at line %d,column %d you wrote %s instead of %s"  % (error[0], error[1],error[2],error[3])
+            elif (len(error)==3):
+                print "at line %d you wrote %s instead of %s"  % (error[0], error[1],error[2])
+
+    def globalMessages(self,nl,points,timeElapsed):
         self.print_table(nl)
         print("\n")
         print("you got "+str(points)+" points")
@@ -334,11 +356,6 @@ class Feat:
         print("if you load your profile, you can get more readable reports")
         message2="feat : %s, memotime : %s, points : %s \n"%(str(self.__class__.__name__),str(self.memoTime),str(points))
         f2.write(message2)
-        for error in errors:
-            if(len(error)==4):
-                print "at line %d,column %d you wrote %s instead of %s"  % (error[0], error[1],error[2],error[3])
-            elif (len(error)==3):
-                print "at line %d you wrote %s instead of %s"  % (error[0], error[1],error[2])
 
     def print_table(self,nR):
         """ Display the table of the elements to be learned
@@ -489,7 +506,7 @@ class Words(Feat):
 
 class Cards(Feat, PygameExperiment):
     def __init__(self,row, col, memoTime,restiTime,sep,tempFile="temp.txt"):
-        Feat.__init__(self, row, col,memoTime,restiTime,separatorPlaceHolder=sep,tempFile="cards_temp.txt",blocMode=True)
+        Feat.__init__(self, row, col,memoTime,restiTime,separatorPlaceHolder=sep,tempFile="cards_temp.txt",blocMode=True,longestStreak=True)
         PygameExperiment.__init__(self, filename=None, subject = "John Doe", debug = False,system="PA")
 
     def displayLearningMaterial(self):
@@ -501,3 +518,17 @@ class Cards(Feat, PygameExperiment):
 
     def print_table(self,nR):
         print(str(self.solution))#completely lame \O/
+        #TODO: Better print table with unicode playing cards
+
+    def globalMessages(self,nl,points,timeElapsed):
+        self.print_table(nl)
+        print("\n")
+        t=str(float(self.viewingTime)/1000)
+        if(points!=-1):
+            print("you got "+str(points)+" points")
+        else:
+            print("perfect recall in "+t+"s")
+        print("remaining restitution time : "+str(self.restiTime-timeElapsed)+" s")
+        print("if you load your profile, you can get more readable reports")
+        message2="feat : %s, memotime : %s, points : %s , time : %s \n"%(str(self.__class__.__name__),str(self.memoTime),str(points),t)
+        f2.write(message2)
