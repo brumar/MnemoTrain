@@ -5,11 +5,14 @@ import csv
 from os import listdir
 from os.path import isfile, join
 import uuid
+from PygameExperiment import *
+import MOL
 
 
-locipath="../Loci"
-datas="../rawDatas/feats.csv"
-f2=open('../rawDatas/global.txt', 'a') #print globalMessages
+
+locipath="./Loci"
+datas="./rawDatas/feats.csv"
+f2=open('./rawDatas/global.txt', 'a') #print globalMessages
 
 #these options should not be there : TODO: fix this
 
@@ -34,7 +37,7 @@ def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,c
     lastLoci=["",""]
     #if loci is not defined, default values avoiding bugs
     if(locis==None):
-        indexLoci=""
+        indexLoci=0
         currentLoci=["",""]
     while cont:
         for b,bloc in enumerate(blocs):
@@ -82,6 +85,7 @@ def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,c
                 lastLoci=currentLoci
                 indexAns+=size
     if(checker=="y")and(locis!=None):
+        # this loci checker must be placed at the beginning !
         checked=raw_input("the last loci you used was %s, containing %s, right ? (y/n) : "%(lastLoci[1],solution))#lastLoci = Trick to avoid strange bug
         if(checked=="n"):
             raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
@@ -227,16 +231,16 @@ class Feat:
         self.tempFile=tempFile
         self.blocMode=blocMode
         self.revert=revert
+        self.attempt=0
 
     def proceed(self):
         """Proceed to the feat
         """
-        self.waiter(self.nbRows)
-        self.build_table_solution()
-        self.print_table(self.nbRows)
-        print("\n"*9)
-        time.sleep(self.memoTime)
-        print("\n"*30)
+        self.displayLearningMaterial()
+        self.recall()
+        return self.solution,self.answer,self.attempt
+
+    def recall(self):
         timeResti=time.clock()
         self.createAndOpenSheet()
 
@@ -244,9 +248,17 @@ class Feat:
         if(do=="l"):
             timeElapsed=round(time.clock()-timeResti)
             self.answer=self.buildAnswerFromFile(self.tempFile)
-            [errors,points,nlines,attempt]=self.compareSolutionAnswer(self.solution,self.answer)
+            [errors,points,nlines,self.attempt]=self.compareSolutionAnswer(self.solution,self.answer)
             self.print_debrief(errors,points,nlines,timeElapsed)
-        return self.solution,self.answer,attempt
+
+    def displayLearningMaterial(self):
+        self.waiter(self.nbRows)
+        self.build_table_solution()
+        self.print_table(self.nbRows)
+        print("\n"*9)
+        time.sleep(self.memoTime)
+        print("\n"*30)
+
 
     def waiter(self,nR):
         time.sleep(1)
@@ -268,6 +280,49 @@ class Feat:
         with open(self.tempFile, 'w') as f:
             pass
         os.system("start "+self.tempFile)# windows only, for mac : os.system("open "+filename)
+
+    def buildAnswerFromFile(self,fname):
+        """ Read the recall file given by the user """
+        answer=[]
+        with open(fname, 'rb') as csvfile:
+            spamreader = csv.reader(csvfile, delimiter=';')
+            for row in spamreader:
+                lanswer=[]
+                if(self.blocMode):
+                    lanswer.extend(row)
+                else:
+                    for element in row:
+                        lanswer.extend(element)
+                answer.append(lanswer)
+        return answer
+
+
+    def compareSolutionAnswer(self,lsol,lansw): #TODO: this function should be coded in separate parts in order to build better overriding
+        """ compare the recall file with the target, count the points and raise the errors"""
+        indexL=0
+        points=0
+        errors=[]
+        attempt=0
+        if(self.revert): # columns are taken as lines in order to compare columns by columns
+            lsol=zip(*lsol)
+            lansw=zip(*lansw)
+        for linAns in lansw:
+            lineErrors=0
+            indexCol=0
+            for item in linAns:
+                attempt+=1
+                if(lsol[indexL][indexCol]!=item):
+                    errorReport=[indexL,indexCol,item,lsol[indexL][indexCol]]
+                    errors.append(errorReport)
+                    lineErrors+=1
+                indexCol+=1
+            if lineErrors==1:
+                points+=indexCol/2
+            else:
+                if lineErrors==0:
+                    points+=indexCol
+            indexL+=1
+        return(errors,points,indexL,attempt)
 
     def print_debrief(self,errors,points,nl,timeElapsed):
         """ Display User friendly outputs
@@ -331,48 +386,7 @@ class Feat:
                 row+=sep+item
             self.table+=row+sep+"\n"
 
-    def buildAnswerFromFile(self,fname):
-        """ Read the recall file given by the user """
-        answer=[]
-        with open(fname, 'rb') as csvfile:
-            spamreader = csv.reader(csvfile, delimiter=';')
-            for row in spamreader:
-                lanswer=[]
-                if(self.blocMode):
-                    lanswer.extend(row)
-                else:
-                    for element in row:
-                        lanswer.extend(element)
-                answer.append(lanswer)
-        return answer
 
-
-    def compareSolutionAnswer(self,lsol,lansw):
-        """ compare the recall file with the target, count the points and raise the errors"""
-        indexL=0
-        points=0
-        errors=[]
-        attempt=0
-        if(self.revert): # columns are taken as lines in order to compare columns by columns
-            lsol=zip(*lsol)
-            lansw=zip(*lansw)
-        for linAns in lansw:
-            lineErrors=0
-            indexCol=0
-            for item in linAns:
-                attempt+=1
-                if(lsol[indexL][indexCol]!=item):
-                    errorReport=[indexL,indexCol,item,lsol[indexL][indexCol]]
-                    errors.append(errorReport)
-                    lineErrors+=1
-                indexCol+=1
-            if lineErrors==1:
-                points+=indexCol/2
-            else:
-                if lineErrors==0:
-                    points+=indexCol
-            indexL+=1
-        return(errors,points,indexL,attempt)
 
 class Dates(Feat):
     def __init__(self, nbRows, lengthColumn,memoTime,restiTime,separator="|",separatorPlaceHolder=2,tempFile="temp.txt",indent=5,freqMax=8000,dico='./dates/13jan.csv',sizeCell=20,blocMode=True,revert=True):
@@ -472,3 +486,18 @@ class Words(Feat):
             return random.choice(self.verbs)
         else:
             return random.choice(self.nouns)
+
+class Cards(Feat, PygameExperiment):
+    def __init__(self,row, col, memoTime,restiTime,sep,tempFile="temp.txt"):
+        Feat.__init__(self, row, col,memoTime,restiTime,separatorPlaceHolder=sep,tempFile="cards_temp.txt",blocMode=True)
+        PygameExperiment.__init__(self, filename=None, subject = "John Doe", debug = False,system="PA")
+
+    def displayLearningMaterial(self):
+        D = MOL.Deck(self.separatorPlaceHolder, show_as_text=False)
+        self.add_collection(D, True)
+        self.explore()
+        self.ending()
+        self.solution=[self.solution]   # dirty trick to get solution vector consistent with comparison algo
+
+    def print_table(self,nR):
+        print(str(self.solution))#completely lame \O/

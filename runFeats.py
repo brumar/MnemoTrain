@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from mnemy.disciplines import Binaries, Words, Numbers, Dates, profileLoader, errorsLoader, reportDatas,lociLoader
+from mnemy.disciplines import Binaries, Words, Numbers, Dates, profileLoader, errorsLoader, reportDatas,lociLoader, Cards
 from mnemy.utils import smartRawInput
+import mnemy.PygameExperiment as pe
+import mnemy.MOL as MOL
+
 import time
+
+#    TODO : avoid permission denied error by looping
 
 if __name__ == "__main__":
 
@@ -10,7 +15,12 @@ if __name__ == "__main__":
     # Load Discipline Parameters
     #===========================================================================
 
-    feat=raw_input("pick your feat (d=digits,b=binaries,w=words,h=historicalDates) : ")
+    feat=raw_input("pick your feat (d=digits,b=binaries,w=words,h=historicalDates,s=SpeedCards) : ")
+
+    #===========================================================================
+    # Set defaults values
+    #===========================================================================
+
     if(feat=="")or(feat=="d"):
         feat="d"
         sep,row,col,memoTime,restiTime,sepSign=2,20,40,300,900,"|"
@@ -25,15 +35,22 @@ if __name__ == "__main__":
     if(feat=="b"):
         sep,row,col,memoTime,restiTime,sepSign=6,25,30,300,900,"|"
 
-    else:
-        sep=smartRawInput("separaters every N items",sep,int)
+    if(feat=="s"):
+        row,col,sep,memoTime,restiTime,sepSign=1,52,3,300,900,"|"
 
-    row=smartRawInput("how many rows",row,int)
-    col=smartRawInput("how many cols",col,int)
+    #===========================================================================
+    # Override default values
+    #===========================================================================
+
+    if(feat!="s"):
+        row=smartRawInput("how many rows",row,int)
+        col=smartRawInput("how many cols",col,int)
+    else:
+        sep=smartRawInput("number cards to display each time",sep,int)
     memoTime=smartRawInput("how much time to learn (s)",memoTime,float)
     restiTime=smartRawInput("how much time to write (s)",restiTime,float)
 
-    memoTime=2    #commented line for debugging purpose
+    #memoTime=2    #commented line for debugging purpose
 
     #===========================================================================
     # Proceed to the discipline
@@ -47,6 +64,8 @@ if __name__ == "__main__":
         ff=Numbers(row, col,memoTime,restiTime,sepSign,sep,"num_temp.txt",indent=5)
     if(feat=="h"):
         ff=Dates(row, col,memoTime,restiTime,sepSign,sep,"dates_temp.txt",indent=5)
+    if(feat=="s"): #MUST BE SIMPLIFIED
+        ff=Cards(row, col,memoTime,restiTime,sep,"cards_temp.txt")
     [solution,answer,attempt]=ff.proceed()
 
     #===========================================================================
