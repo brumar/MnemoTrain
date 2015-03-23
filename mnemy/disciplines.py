@@ -1,16 +1,213 @@
 import random
 import time
 import os
-import msvcrt
 import csv
 from os import listdir
 from os.path import isfile, join
 import uuid
 
 
-locipath="./Loci"
-datas="./rawDatas/feats.csv"
-f2=open('./rawDatas/global.txt', 'a') #print globalMessages
+locipath="../Loci"
+datas="../rawDatas/feats.csv"
+f2=open('../rawDatas/global.txt', 'a') #print globalMessages
+
+#these options should not be there : TODO: fix this
+
+
+#===============================================================================
+# FUNCTIONS
+#===============================================================================
+
+def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,checker="n",revert=False): #too complex
+    if(revert): # columns are taken as lines in order to compare columns by columns
+        sol=zip(*sol)
+        ans=zip(*ans)
+    fsol=[item for sublist in sol for item in sublist]#flatten sol
+    fans=[item for sublist in ans for item in sublist]
+    blocs=system["system"].split(",")
+    currentLoci=""
+    indexAns=0
+    indexLoci=0
+    cont=True
+    localReport=[]
+    spot=0
+    lastLoci=["",""]
+    #if loci is not defined, default values avoiding bugs
+    if(locis==None):
+        indexLoci=""
+        currentLoci=["",""]
+    while cont:
+        for b,bloc in enumerate(blocs):
+            if(locis!=None):
+                #print(locis)
+                #print(indexLoci)
+                try:
+                    currentLoci=locis[indexLoci]
+                except IndexError:
+                    decision=raw_input("your journey seems too short for this feat. This also may be dued to incorrect profile settings.\n reload another journey(r), use blank locis(b), quit(q) : ")
+                    if(decision=="r"):
+                        raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
+                        locis=lociLoader()
+                        reportDatas(sol,ans,system,errorDic,globalReport,locis,checker="y") # restart with new locis
+                        return
+                    if(decision=="q"):
+                        currentLoci=["",""]
+                        locis=None #with locis = None, we never enter this loci block
+                indexLoci+=1
+            for image in bloc:
+                size=int(system["imagesSize"][image])
+                if(indexAns+size>len(fans)):
+                    cont=False
+                    break
+                spot+=1
+                answer=fans[indexAns:indexAns+size]
+                solution=fsol[indexAns:indexAns+size]
+                answer=''.join(answer)
+                solution=''.join(solution)
+                correct=(answer==solution)
+                er=""
+                if(correct==False):
+                    if(errorDic!=None):
+                        message=errorsPickerMessage(errorDic)+"\n you can also write a new error \n"
+                        print(message)
+                        print("Error : at %s (loci %d), %s was %s, not %s"%(currentLoci[1],indexLoci,image,solution,answer) )
+                        er=raw_input("your choice : ")
+                        try:
+                            ide=int(er)
+                            if ide in (errorDic["index"]).keys():
+                                er=errorDic["index"][ide]
+                        except :
+                            pass
+                localReport.append([answer,solution,correct,er,image,currentLoci[0],currentLoci[1],b,indexLoci,spot])
+                lastLoci=currentLoci
+                indexAns+=size
+    if(checker=="y")and(locis!=None):
+        checked=raw_input("the last loci you used was %s, containing %s, right ? (y/n) : "%(lastLoci[1],solution))#lastLoci = Trick to avoid strange bug
+        if(checked=="n"):
+            raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
+            locis=lociLoader()
+            reportDatas(sol,ans,system,errorDic,globalReport,locis,checker="y")
+        else:
+            printReports(globalReport,localReport)
+    else:
+        printReports(globalReport,localReport)
+
+
+def printReports(globalReport,localReport):
+    with open(datas, 'ab') as f:
+        writer = csv.writer(f,delimiter=';')
+        for l in localReport:
+            l.extend(globalReport)
+            writer.writerow(l)
+    print("\n congratulations, the report has appended to "+datas)
+
+def updateUuid(fileName):
+    l=[]
+    with open(fileName, 'rb') as csvfile: #read
+        spamreader = csv.reader(csvfile, delimiter=';')
+        for row in spamreader:
+            #print(row)
+            lr=[]
+            if(len(row)==1):
+                lr.append(str(uuid.uuid1()))
+                lr.append(row[0])
+            else:
+                lr.extend(row)
+            l.append(lr)
+
+    with open(fileName, 'wb') as f: #overwrite
+        writer = csv.writer(f,delimiter=';')
+        for lr in l:
+            writer.writerow(lr)
+
+
+def lociLoader():
+    lociFiles = [ f for f in listdir(locipath) if (isfile(join(locipath,f))and f[-4:]==".csv" )]
+    message="load options : "
+    for i,lf in enumerate(lociFiles):
+        message+="\n -"+lf+"("+str(i)+") "
+    message+="\n quit loading locis (q)"
+    message+="\n choice : "
+    il=raw_input(message)
+    if il=="q":
+        return None
+    chosenFile=lociFiles[int(il)]
+    fileName=join(locipath,chosenFile)
+    updateUuid(fileName)
+    locis=buildLociFromFile(fileName)
+    specific=raw_input("this journey contains %d locis, do you want to start at a specific loci (y/n) default=n : "%len(locis))
+    cp=1
+    if(specific=="y"):
+        message="index : "
+        for indexLoc,loc in enumerate(locis):
+            message+="\n -"+loc[1]+"("+str(indexLoc+1)+") "
+        message+="\n choice : "
+        chosenPosition=raw_input(message)
+        cp=int(chosenPosition)
+    return locis[cp-1:]
+
+def buildLociFromFile(filename):
+    locis=[]
+    with open(filename, 'rb') as csvfile: #read
+        spamreader = csv.reader(csvfile, delimiter=';')
+        for i,r in enumerate(spamreader):
+            locis.append(r)
+        return locis
+
+
+def profileLoader(profileFile,feat,row,col):
+    systemDic={}
+    try:
+        profile = dict(line.strip().split('=') for line in open(profileFile))
+    except:
+        raise Exception(profileFile+" not found")
+    key=""
+    if(feat=="w"):
+        key=str(feat)+str(row) # for words, the number of row is more relevant
+    else :
+        key=str(feat)+str(col)
+    if(key in profile):
+        system=profile[key]
+        systemDic["system"]=system
+        temp={}
+        limages=list(set(system)-set(','))
+        for image in limages:
+            try:
+                temp[image]=profile[image]
+            except:
+                raise Exception("no size affected to "+image)
+        systemDic["imagesSize"]=temp
+    else:
+        raise Exception("no system for this feat")
+    return systemDic
+
+def errorsLoader(errorsFile):
+    errors={}
+    try:
+        errors = dict(line.strip().split('=') for line in open(errorsFile))
+    except:
+        raise Exception(errorsFile+" not found")
+    errors["index"]={}
+    for e,error in enumerate(errors.keys()):
+        if(e!="index"):
+            errors["index"][e]=error;
+        # this dic is usefull for letting the user pick an error with an index
+    return errors
+
+def errorsPickerMessage(errorsDic): #message is "describe" or "select"
+    # TODO:  an enumeration would be better
+    message=""
+    for error,description in errorsDic.iteritems():
+        if(error!="index"):
+            message+="%s : %s \n"%(error,description)
+    message+="\n"
+    for i,error in (errorsDic["index"]).iteritems():
+        message+="%s (%d)\n"%(error,i)
+    return message
+
+#===============================================================================
+# CLASSES
+#===============================================================================
 
 class Feat:
     """Class implementing the most important features of each feats
