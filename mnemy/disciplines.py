@@ -7,6 +7,8 @@ from os.path import isfile, join
 import uuid
 from PygameExperiment import *
 import MOL
+from mnemy import tableImageGenerator as tgen
+from mnemy import tableFacesGenerator as tgenF
 
 
 
@@ -20,6 +22,14 @@ f2=open('./rawDatas/global.txt', 'a') #print globalMessages
 #===============================================================================
 # FUNCTIONS
 #===============================================================================
+def find(l, elem):
+    for row, i in enumerate(l):
+        try:
+            column = i.index(elem)
+        except ValueError:
+            continue
+        return row, column
+    return -1
 
 def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,checker="n",revert=False): #too complex
     if(revert): # columns are taken as lines in order to compare columns by columns
@@ -245,6 +255,7 @@ class Feat:
         return self.solution,self.answer,self.attempt
 
     def recall(self):
+        self.beforeRecall() #act as a hook for feats requiring some actions
         timeResti=time.clock()
         self.createAndOpenSheet()
 
@@ -254,6 +265,9 @@ class Feat:
             self.answer=self.buildAnswerFromFile(self.tempFile)
             [errors,points,nlines,self.attempt]=self.compareSolutionAnswer(self.solution,self.answer)
             self.print_debrief(errors,points,nlines,timeElapsed)
+
+    def beforeRecall(self):
+        pass
 
     def displayLearningMaterial(self):
         self.waiter(self.nbRows)
@@ -289,7 +303,7 @@ class Feat:
         """ Read the recall file given by the user """
         answer=[]
         with open(fname, 'rb') as csvfile:
-            spamreader = csv.reader(csvfile, delimiter=';')
+            spamreader = csv.reader(csvfile, delimiter=' ')
             for row in spamreader:
                 lanswer=[]
                 if(self.blocMode):
@@ -301,7 +315,7 @@ class Feat:
         return answer
 
 
-    def compareSolutionAnswer(self,lsol,lansw): #TODO: this function should be coded in separate parts in order to build better overriding
+    def compareSolutionAnswer(self,lsol,lansw):
         """ compare the recall file with the target, count the points and raise the errors"""
         indexL=0
         points=0
@@ -318,7 +332,7 @@ class Feat:
             for item in linAns:
                 attempt+=1
                 if(lsol[indexL][indexCol]!=item):
-                    errorReport=[indexL,indexCol,item,lsol[indexL][indexCol]]
+                    errorReport=[indexL,indexCol,item,lsol[indexL][indexCol]] #TODO: should be a class
                     errors.append(errorReport)
                     if( noError):
                         LstStreak=attempt-1
@@ -505,16 +519,15 @@ class Words(Feat):
             return random.choice(self.nouns)
 
 class Cards(Feat, PygameExperiment):
-    def __init__(self,row, col, memoTime,restiTime,sep,tempFile="temp.txt"):
-        Feat.__init__(self, row, col,memoTime,restiTime,separatorPlaceHolder=sep,tempFile="cards_temp.txt",blocMode=True,longestStreak=True)
-        PygameExperiment.__init__(self, filename=None, subject = "John Doe", debug = False,system="PA")
+    def __init__(self,row, col, memoTime,restiTime,sep,tempFile="temp.txt",manyDecks=False):
+        longestStreak=(row==1)# points counting differs for speed cards
+        Feat.__init__(self, row, col,memoTime,restiTime,separatorPlaceHolder=sep,tempFile="cards_temp.txt",blocMode=True,longestStreak=longestStreak)
+        PygameExperiment.__init__(self, filename=None, subject = "John Doe", debug = False,system="PA",manyDecks=manyDecks,sep=sep)
 
     def displayLearningMaterial(self):
-        D = MOL.Deck(self.separatorPlaceHolder, show_as_text=False)
-        self.add_collection(D, True)
         self.explore()
         self.ending()
-        self.solution=[self.solution]   # dirty trick to get solution vector consistent with comparison algo
+        self.solution=self.solution   # dirty trick to get solution vector consistent with comparison algo
 
     def print_table(self,nR):
         print(str(self.solution))#completely lame \O/
@@ -532,3 +545,195 @@ class Cards(Feat, PygameExperiment):
         print("if you load your profile, you can get more readable reports")
         message2="feat : %s, memotime : %s, points : %s , time : %s \n"%(str(self.__class__.__name__),str(self.memoTime),str(points),t)
         f2.write(message2)
+
+class AbstractImages(Feat):
+    def __init__(self, nbRows, lengthColumn,memoTime,restiTime,blocMode=True):
+        Feat.__init__(self, nbRows, lengthColumn,memoTime,restiTime,blocMode=blocMode,tempFile="images_temp.txt")
+        self.imageFiles=[]
+        self.buildCollection("./abstractImages")#put 2 extra arguments + sizecell=20
+        self.tableRepresentation=[]
+        self.tableRepresentationRecall=[]
+        self.path="abstractImages"
+
+    def beforeRecall(self):
+        self.shuffleTable()
+        recallsheet="recall.html"
+        tgen.createTemplate(self.tableRepresentationRecall,recallsheet,self.path)
+        os.system("start "+recallsheet)
+        self.buildSolution()
+
+    def buildSolution(self):
+        self.solution=[]
+        for r,row in enumerate(self.tableRepresentationRecall):
+            v=[]
+            for image in row:
+                newIndex=(self.tableRepresentation[r]).index(image)
+                v.append(str(newIndex))
+            self.solution.append([",".join(v)])
+
+    def shuffleTable(self):
+        for row in self.tableRepresentation:
+            rd.shuffle(row)
+            self.tableRepresentationRecall.append(row)
+
+    def print_table(self,nR):
+        pass
+
+    def buildCollection(self,imagePath):
+        self.imageFiles = [ f for f in listdir(imagePath) if (isfile(join(imagePath,f)) )]
+        rd.shuffle(self.imageFiles)
+
+    def displayLearningMaterial(self):
+        self.tableRepresentation=self.buildTable()
+        sheetName="learn.html"
+        tgen.createTemplate(self.tableRepresentation,sheetName,self.path)
+        os.system("start "+sheetName)# windows only, for mac : os.system("open "+filename)
+        time.sleep(self.memoTime)
+
+    def buildTable(self):
+        ta=[]
+        for r in range(self.nbRows):
+            t=[]
+            for c in range(self.lengthColumn):
+                t.append(self.imageFiles.pop())
+            ta.append(t)
+        return ta
+
+class NameAndFaces(Feat):
+    def __init__(self, nbRows, lengthColumn,memoTime,restiTime,blocMode=True,rankMax=10000):
+        Feat.__init__(self, nbRows, lengthColumn,memoTime,restiTime,tempFile="faces_temp.txt")
+        self.rankMax=rankMax
+        self.imageMaleFiles=[]
+        self.imageFemaleFiles=[]
+        self.buildCollection("./faces/FemaleFaces/","./faces/MaleFaces/")#put 2 extra arguments + sizecell=20
+        self.maleNames=self.buildNames("./names/MaleNames.csv")
+        self.FemaleNames=self.buildNames("./names/FemaleNames.csv")
+        self.allNames=[]
+        self.allNames.extend(self.maleNames)
+        self.allNames.extend(self.FemaleNames)
+        self.sheetName="learnFaces.html"
+        self.solution={}
+        self.imageToNames={}
+        self.solutionAsImages={}
+        self.tableImage=[]
+        self.tableImageRecall=[]
+        self.path="faces"
+
+    def bindNamesToImages(self):
+        ta=[]
+        for r in range(self.nbRows):
+            t=[]
+            tima=[]
+            for c in range(self.lengthColumn):
+                name=random.choice(self.allNames)
+                if(random.randint(0, 1)==0):
+                    image=self.imageFemaleFiles.pop()
+                    firstName=random.choice(self.FemaleNames)
+                else:
+                    image=self.imageMaleFiles.pop()
+                    firstName=random.choice(self.maleNames)
+                self.imageToNames[image]=[firstName,name]
+                tima.append(image)
+                t.append([image,firstName,name])
+            self.tableImage.append(tima)
+            ta.append(t)
+        return ta
+
+    def beforeRecall(self):
+        self.shuffleTable()#self.tableImageRecall
+        self.prepareImageRecall()
+        recallsheet="recall.html"
+        tgenF.createTemplate(self.tableImageRecall,recallsheet,self.path)
+        os.system("start "+recallsheet)
+        self.buildSolution()
+
+    def prepareImageRecall(self):
+        index=0
+        for r in range(self.nbRows):
+            for c in range(self.lengthColumn):
+                index+=1
+                image=self.tableImageRecall[r][c]
+                self.tableImageRecall[r][c]=[image,"",str(index)] #dirty trick to be template compliant in html generation
+
+    def buildNames(self,dictionnary,freqMax=10000):
+        l=[]
+        with open(dictionnary, 'rb') as csvfile:
+            spamreader = csv.reader(csvfile, delimiter=';', quotechar='"')
+            for r,row in enumerate(spamreader):
+                if(r==self.rankMax):
+                    break
+                l.append(row[0])
+        return l
+
+    def buildSolution(self):#bind two dictionnaries together
+        for ind,im in self.solutionAsImages.iteritems():
+            vecNames=self.imageToNames[im]
+            self.solution[ind]=vecNames
+
+    def shuffleTable(self):
+        temp=[item for sublist in self.tableImage for item in sublist]
+        random.shuffle(temp)
+        index=0
+
+        self.tableImageRecall=[]
+        for r in range(self.nbRows):
+            ro=[]
+            for c in range(self.lengthColumn):
+                im=temp[index]
+                ro.append(im)
+                index+=1
+                self.solutionAsImages[index]=im
+            self.tableImageRecall.append(ro)
+
+    def print_table(self,nR):
+        pass
+
+    def buildCollection(self,imageFemalePath,imageMalePath):
+        self.imageMaleFiles = [ "MaleFaces/"+f for f in listdir(imageMalePath) if (isfile(join(imageMalePath,f)) )]
+        self.imageFemaleFiles = [ "FemaleFaces/"+f for f in listdir(imageFemalePath) if (isfile(join(imageFemalePath,f)) )]
+        rd.shuffle(self.imageMaleFiles)
+        rd.shuffle(self.imageFemaleFiles)
+
+    def displayLearningMaterial(self):
+        self.nameAndFaces=self.bindNamesToImages()
+        tgenF.createTemplate(self.nameAndFaces,self.sheetName,self.path)
+        os.system("start "+self.sheetName)# windows only, for mac : os.system("open "+filename)
+        time.sleep(self.memoTime)
+
+    def createAndOpenSheet(self): #overriding default method
+        with open(self.tempFile, 'wb') as f:
+            for indexImage in range(self.nbRows*self.lengthColumn):
+                f.write(str(indexImage+1)+';\n')
+        os.system("start "+self.tempFile)# windows only, for mac : os.system("open "+filename)
+
+    def buildAnswerFromFile(self,fname):
+        answer={}
+        try:
+            with open(fname, 'rb') as f:
+                for line in f:
+                    ansVec=line.split(";")
+                    ansVec[1]=ansVec[1].replace("\n","")
+                    if(ansVec[1]!=""):
+                        answer[int(ansVec[0])]=ansVec[1].split(" ")
+        except:
+            raise Exception("problem with your file")
+
+        return answer
+
+    def compareSolutionAnswer(self,lsol,lansw): #Here sol and lansw are dictionnaries
+        points=0
+        errors=[]
+        attempts=0
+        for index,vecNames in lansw.iteritems():
+            noFault=True
+            for position,name in enumerate(vecNames):
+                attempts+=1
+                if(lsol[index][position]==name):
+                    points+=1
+                else:
+                    noFault=False
+                    er=[index,1,str(lansw[index]),str(lsol[index])]
+            if(not noFault):
+                errors.append(er)
+
+        return(errors,points,index,attempts)

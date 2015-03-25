@@ -9,6 +9,7 @@ Contient les fonctions permettant d'interagir avec pygame
 
 import pygame as pg
 import random as rd
+import MOL
 import time
 
 background_color = (155, 155, 155)
@@ -30,7 +31,8 @@ time_highlight = 500
 
 class PygameExperiment():
 
-    def __init__(self, filename=None, subject = "John Doe", debug = False,system="PA"):
+    def __init__(self, filename=None, subject = "John Doe", debug = False,system="PA",manyDecks=False,sep=2):
+        self.manyDecks=manyDecks
         self.debub=debug
         self.data_file = filename
         self.subject = subject
@@ -48,6 +50,7 @@ class PygameExperiment():
         self.system=system
         self.solution=[]
         self.viewingTime=0
+        self.nbDisplay=sep
         #Image    indexItem    timestamp    time    item    context    extra_1    extra_2
 
     def pgInit(self):
@@ -118,7 +121,7 @@ class PygameExperiment():
             keys.append(k)
         elif type(k).__name__== "list":
             for key in k:
-                keys.append(k)
+                keys.append(key)
 
         for event in pg.event.get():
             pass
@@ -350,77 +353,63 @@ class PygameExperiment():
                         c = False
                         break
 
-    def explore(self, can_quit = True, record = True, startPos = 1):
+    def explore(self, can_quit = True, record = True, startPos = 1,memoTime=300):
         self.pgInit()
-        assert self.has_collection()
-        nbDisplay = self.collection.nb_display
+        thereAreOtherDecks=True
+        indexDeck=0
+        start = pg.time.get_ticks()
+        while(thereAreOtherDecks):
+            thereAreOtherDecks=self.manyDecks
+            indexDeck+=1
+            lastPos,solution=self.prepareDeck()
+            self.solution.append(solution)
+            self.write_instruction("deck "+str(indexDeck)+"\n Escape to quit", None)
+            self.wait_space()
+            pos = startPos
+            c = True
+            while c:
+                c,pos,lastPos,thereAreOtherDecks=self.displayItems(self.collection.elements,self.collection.pictures,pos,lastPos,can_quit)
+        self.save_proc()
+        self.viewingTime=pg.time.get_ticks()-start
+
+    def prepareDeck(self):
+        D = MOL.Deck(self.separatorPlaceHolder, show_as_text=False)
+        self.add_collection(D, True)
         textual = self.collection.isText == True
         toExplore = self.collection.elements
+        solution=[]
         if not(textual):
             pictures = self.collection.pictures
             for picture in pictures:
-                self.solution.append(self.pictureToTextNotation(picture))
-        pos = startPos
-        c = True
-        lastPos = int(len(toExplore)/nbDisplay)
+                solution.append(self.pictureToTextNotation(picture))
+        return int(len(toExplore)/self.nbDisplay),solution
 
-        log = []
-        timeLog = []
-        for i in range(lastPos):
-            timeLog.append(0)
-        start = pg.time.get_ticks()
-        last_time = start
-        log.append(str([pos, 0]))
-
-        while c:
-            if textual:
-                self.write_instruction(toExplore[(pos-1)*nbDisplay:(pos)*nbDisplay], self.font_stimuli)
-
-            else:
-                if((pos+1)*nbDisplay-1<len(pictures)):
-         # handle the case of the number of cards don't fit with the system.
-                    self.display_pictures(pictures[(pos-1)*nbDisplay:(pos)*nbDisplay])
-                else:
-                    self.display_pictures(pictures[(pos-1)*nbDisplay:])
-
-            pg.display.flip()
-
-            for event in pg.event.get():
-                if event.type==pg.KEYDOWN:
-                    if event.key == pg.K_LEFT:
-                        pos -= 1
-                        if pos<1:
-                            pos = 1
-                        else:
-                            timeLog[pos] = timeLog[pos] + pg.time.get_ticks()- last_time
-                            last_time = pg.time.get_ticks()
-                            log.append(str([pos, last_time-start]))
-                    if event.key == pg.K_RIGHT:
-                        pos += 1
-                        if pos>lastPos:
-                            pos = lastPos
-                        else:
-                            timeLog[pos-2] = timeLog[pos-2] + pg.time.get_ticks()- last_time
-                            last_time = pg.time.get_ticks()
-                            log.append(str([pos, last_time-start]))
-                    if event.key == pg.K_RETURN:
-                        timeLog[pos-1] = timeLog[pos-1] + pg.time.get_ticks()- last_time
-                        c = False
-                    if can_quit:
-                        if (event.key == pg.K_ESCAPE):
-                            raise Exception()
-            self.viewingTime=pg.time.get_ticks()-start
-            self.save_proc()
-
-        total_time = pg.time.get_ticks()-start
-        if record:
-            self.write("Phase d'exploration")
-            self.write("Log des changements de position :"+str(log))
-            self.write("Temps totaux d'exploration :")
-            for i in range(len(timeLog)):
-                self.write("Position "+str(i+1)+": "+str(timeLog[i]))
-            self.write("__________\n")
-        return timeLog, total_time
+    def displayItems(self,toExplore,pictures,pos,lastPos,can_quit):
+        c=True
+        nbDisplay=self.nbDisplay
+        lastBatch=(pos+1)*nbDisplay>len(pictures)
+        if(not lastBatch):
+            # handle the case of the number of cards don't fit with the system.
+            self.display_pictures(pictures[(pos-1)*nbDisplay:(pos)*nbDisplay])
+        else:
+            self.display_pictures(pictures[(pos-1)*nbDisplay:])
+        pg.display.flip()
+        for event in pg.event.get():
+            if event.type==pg.KEYDOWN:
+                if event.key == pg.K_LEFT:
+                    pos -= 1
+                    if pos<1:
+                        pos = 1
+                if event.key == pg.K_RIGHT:
+                    pos += 1
+                    if pos>lastPos:
+                        pos = lastPos
+                if lastBatch and event.key == pg.K_RETURN:
+                    c = False
+                if can_quit:
+                    if (event.key == pg.K_ESCAPE):
+                        return False,pos,lastPos,False
+        return c,pos,lastPos,True
 
     def recall_input(self, items_per_line, record = True):
         #A faire : mettre des symboles pique/coeur, etc

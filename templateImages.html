@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <title>{{ title }}</title>
+  <meta name="description" content="{{ description }}" />
+</head>
+
+<body>
+
+<div id="content">
+  <p>Learning Material</p>
+
+  <table>
+  {% for imageRow in dicImages %}
+  <tr>
+    {% for image in imageRow %}
+    <td><img width="200px" src="{{path}}/{{image}}"></td>
+  {% endfor %}
+  </tr>
+  {% endfor %}
+  </table>
+</div>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from mnemy.disciplines import Binaries, Words, Numbers, Dates, profileLoader, errorsLoader, reportDatas,lociLoader, Cards
+from mnemy.disciplines import Binaries, Words, Numbers, Dates, profileLoader, errorsLoader, reportDatas,lociLoader, Cards, AbstractImages,NameAndFaces
 from mnemy.utils import smartRawInput
 import mnemy.PygameExperiment as pe
 import mnemy.MOL as MOL
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # Load Discipline Parameters
     #===========================================================================
 
-    feat=raw_input("pick your feat (d=digits,b=binaries,w=words,h=historicalDates,s=SpeedCards) : ")
+    feat=raw_input("pick your feat (d=digits,b=binaries,w=words,h=historicalDates,s=SpeedCards,c=Cards,a=AbstractImages,n=NameAndFaces) : ")
 
     #===========================================================================
     # Set defaults values
@@ -38,11 +38,19 @@ if __name__ == "__main__":
     if(feat=="s"):
         row,col,sep,memoTime,restiTime,sepSign=1,52,3,300,900,"|"
 
+    if(feat=="c"):
+        row,col,sep,memoTime,restiTime,sepSign=2,52,3,600,1200,"|"
+
+    if(feat=="a"):
+        sep,row,col,memoTime,restiTime,sepSign=1,2,5,300,900,"|"#2->20
+
+    if(feat=="n"):
+        sep,row,col,memoTime,restiTime,sepSign=1,2,5,300,900,"|"#2->20
     #===========================================================================
     # Override default values
     #===========================================================================
 
-    if(feat!="s"):
+    if(feat not in ["s","c"]):
         row=smartRawInput("how many rows",row,int)
         col=smartRawInput("how many cols",col,int)
     else:
@@ -64,8 +72,14 @@ if __name__ == "__main__":
         ff=Numbers(row, col,memoTime,restiTime,sepSign,sep,"num_temp.txt",indent=5)
     if(feat=="h"):
         ff=Dates(row, col,memoTime,restiTime,sepSign,sep,"dates_temp.txt",indent=5)
-    if(feat=="s"): #MUST BE SIMPLIFIED
-        ff=Cards(row, col,memoTime,restiTime,sep,"cards_temp.txt")
+    if(feat =="c"): #MUST BE SIMPLIFIED
+        ff=Cards(row, col,memoTime,restiTime,sep,"cards_temp.txt",manyDecks=True)
+    if(feat =="s"): #MUST BE SIMPLIFIED
+        ff=Cards(row, col,memoTime,restiTime,sep,"cards_temp.txt",manyDecks=False)
+    if(feat =="a"):
+        ff=AbstractImages(row, col,memoTime,restiTime)
+    if(feat =="n"):
+        ff=NameAndFaces(row, col,memoTime,restiTime)
     [solution,answer,attempt]=ff.proceed()
 
     #===========================================================================

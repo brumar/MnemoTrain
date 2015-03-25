@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <title>{{ title }}</title>
+  <meta name="description" content="{{ description }}" />
+</head>
+
+<body>
+<style>
+td {
+    display: table-cell;
+    vertical-align: inherit;
+    width:20%
+}
+</style>
+<div id="content">
+  <p>Learning Material</p>
+
+  <table>
+  {% for imageRow in dicImages %}
+  <tr>
+    {% for triplet in imageRow %}
+    <td><img width="200px" src="{{path}}/{{triplet[0]}}"><br>{{triplet[1]}} {{triplet[2]}}</td>
+  {% endfor %}
+  </tr>
+  {% endfor %}
+  </table>
+</div>
+
+</body>
+</html>
