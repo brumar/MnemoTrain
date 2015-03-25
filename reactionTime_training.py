@@ -1,4 +1,5 @@
 from mnemy.training import *
+import random
 
 # still dirty but not usefull enough to get pimped up
 
