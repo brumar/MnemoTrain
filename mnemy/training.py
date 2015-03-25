@@ -41,9 +41,12 @@ def takeItem(vec,lastIt):
         i=0
         cumul=0
         while True:
-            cumul+=vec[i]
+            try:
+                cumul+=vec[i] #out of range can occur...
+            except:
+                takeItem(vec,lastIt)# in this case the function is called again
             if(r<cumul):
-                if(not lastIt.contains(i)):
+                if(not lastIt.contains(i)): #...because of this filter
                     return i
             i+=1
 
