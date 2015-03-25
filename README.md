@@ -1,6 +1,7 @@
 # MnemoTrain
 Scripts and statistical analysis related to the training for memory tournaments.
 Official disciplines are gradually implemented with a fine-grained data storing.
+**warning** : abstract images correction is not working because of dumbness.
 If you are a wanderer, you should know that these memory feats are not as boring as it seems, have a look on this [wiki](http://mt.artofmemory.com/wiki/Main_Page) to know more about this lost art
 ## Notes :
 - I'd be happy if you fork or make use of these scripts, I'd be even more happy if you share your datas. You could get statistical analysis for free !
