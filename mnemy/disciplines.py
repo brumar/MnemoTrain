@@ -9,8 +9,7 @@ from PygameExperiment import *
 import MOL
 from mnemy import tableImageGenerator as tgen
 from mnemy import tableFacesGenerator as tgenF
-
-
+from mnemy.utils import openFileMultipleOs
 
 locipath="./Loci"
 datas="./rawDatas/feats.csv"
@@ -297,7 +296,7 @@ class Feat:
         """
         with open(self.tempFile, 'w') as f:
             pass
-        os.system("start "+self.tempFile)# windows only, for mac : os.system("open "+filename)
+        openFileMultipleOs(self.tempFile)# windows only, for mac : os.system("open "+filename)
 
     def buildAnswerFromFile(self,fname):
         """ Read the recall file given by the user """
@@ -446,7 +445,7 @@ class Dates(Feat):
                 dates.append(date)
                 f.write(datelabel+'\n')
             self.solution=dates
-        os.system("start "+self.tempFile)# windows only, for mac : os.system("open "+filename)
+        openFileMultipleOs(self.tempFile)# windows only, for mac : os.system("open "+filename)
 
     def buildAnswerFromFile(self,fname):
         answer=[]
@@ -559,7 +558,7 @@ class AbstractImages(Feat):
         self.shuffleTable()
         recallsheet="recall.html"
         tgen.createTemplate(self.tableRepresentationRecall,recallsheet,self.path)
-        os.system("start "+recallsheet)
+        openFileMultipleOs(recallsheet)
         self.buildSolution()
 
     def buildSolution(self):
@@ -588,7 +587,7 @@ class AbstractImages(Feat):
         self.tableRepresentation=self.buildTable()
         sheetName="learn.html"
         tgen.createTemplate(self.tableRepresentation,sheetName,self.path)
-        os.system("start "+sheetName)# windows only, for mac : os.system("open "+filename)
+        openFileMultipleOs(sheetName)# windows only, for mac : os.system("open "+filename)
         time.sleep(self.memoTime)
 
     def buildTable(self):
@@ -645,7 +644,7 @@ class NameAndFaces(Feat):
         self.prepareImageRecall()
         recallsheet="recall.html"
         tgenF.createTemplate(self.tableImageRecall,recallsheet,self.path)
-        os.system("start "+recallsheet)
+        openFileMultipleOs(recallsheet)
         self.buildSolution()
 
     def prepareImageRecall(self):
@@ -698,14 +697,14 @@ class NameAndFaces(Feat):
     def displayLearningMaterial(self):
         self.nameAndFaces=self.bindNamesToImages()
         tgenF.createTemplate(self.nameAndFaces,self.sheetName,self.path)
-        os.system("start "+self.sheetName)# windows only, for mac : os.system("open "+filename)
+        openFileMultipleOs(self.sheetName)# windows only, for mac : os.system("open "+filename)
         time.sleep(self.memoTime)
 
     def createAndOpenSheet(self): #overriding default method
         with open(self.tempFile, 'wb') as f:
             for indexImage in range(self.nbRows*self.lengthColumn):
                 f.write(str(indexImage+1)+';\n')
-        os.system("start "+self.tempFile)# windows only, for mac : os.system("open "+filename)
+        openFileMultipleOs(self.tempFile)# windows only, for mac : os.system("open "+filename)
 
     def buildAnswerFromFile(self,fname):
         answer={}

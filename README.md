@@ -5,7 +5,7 @@ If you are a wanderer, you should know that these memory feats are not as boring
 ## Notes :
 - I'd be happy if you fork or make use of these scripts, I'd be even more happy if you share your datas. You could get statistical analysis for free !
 - This is not intended to be a high quality repository (messy code, lack of documentation, bad file structure)
-- Tested on python2.7 32bits windows. File opening won't work on other os for the moment, so you have to open them manually.
+- Tested on python2.7 32bits windows.
 - The beloved **runFeats.py** run all the disciplines (except spoken numbers). Datas (mainly about errors) are stored in a csv file.
 - Abstract images and Name and Faces are poorly tested for the moment. Ressources are lacking for these disciplines.
 - error.properties and profile.properties, files in the loci directories are intendend to be edited by the user to let the system know his memory systems and is set of journeys.
@@ -28,7 +28,6 @@ Don't hesitate to contact me if you need.
 ## Future tasks :
 - Allows precise data reporting even if memory system is not specified.
 - Manual for users or at least commented lines in recall txt files.
-- Open file for different OS than windows, display a message if fail to open.
 - Implement spoken numbers as a discipline (only as training script for the moment).
 - Break disciplines.py in smaller parts.
 - Build a common parent class for N&F and abstract images.
