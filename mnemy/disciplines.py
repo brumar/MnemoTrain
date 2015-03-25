@@ -568,13 +568,14 @@ class AbstractImages(Feat):
             v=[]
             for image in row:
                 newIndex=(self.tableRepresentation[r]).index(image)
-                v.append(str(newIndex))
+                v.append(str(newIndex+1))
             self.solution.append([",".join(v)])
 
     def shuffleTable(self):
         for row in self.tableRepresentation:
-            rd.shuffle(row)
-            self.tableRepresentationRecall.append(row)
+            rowtemp=list(row) # cloning to avoid shuffling the original list
+            rd.shuffle(rowtemp)
+            self.tableRepresentationRecall.append(rowtemp)
 
     def print_table(self,nR):
         pass
