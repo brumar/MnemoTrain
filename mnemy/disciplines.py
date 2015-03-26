@@ -30,7 +30,7 @@ def find(l, elem):
         return row, column
     return -1
 
-def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,checker="n",revert=False): #too complex
+def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,checker="n",revert=False,uniBloc=False): #too complex
     if(revert): # columns are taken as lines in order to compare columns by columns
         sol=zip(*sol)
         ans=zip(*ans)
@@ -44,6 +44,8 @@ def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,c
     localReport=[]
     spot=0
     lastLoci=["",""]
+    if(uniBloc)and(system==None): #if uniBloc is true, it means that errors can be processed one by one (1 item = 1 image)
+        blocs=["_"]
     #if loci is not defined, default values avoiding bugs
     if(locis==None):
         indexLoci=0
@@ -655,14 +657,14 @@ class NameAndFaces(Feat):
                 image=self.tableImageRecall[r][c]
                 self.tableImageRecall[r][c]=[image,"",str(index)] #dirty trick to be template compliant in html generation
 
-    def buildNames(self,dictionnary,freqMax=10000):
+    def buildNames(self,dictionnary):
         l=[]
         with open(dictionnary, 'rb') as csvfile:
             spamreader = csv.reader(csvfile, delimiter=';', quotechar='"')
             for r,row in enumerate(spamreader):
                 if(r==self.rankMax):
                     break
-                l.append(row[0])
+                l.append(row[0].title())#first letter in uppercase
         return l
 
     def buildSolution(self):#bind two dictionnaries together
@@ -714,7 +716,7 @@ class NameAndFaces(Feat):
                     ansVec=line.split(";")
                     ansVec[1]=ansVec[1].replace("\n","")
                     if(ansVec[1]!=""):
-                        answer[int(ansVec[0])]=ansVec[1].split(" ")
+                        answer[int(ansVec[0])]=ansVec[1].title().split(" ") #first letter uppercase even if the user forget it
         except:
             raise Exception("problem with your file")
 
