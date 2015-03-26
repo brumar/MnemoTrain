@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # Load Discipline Parameters
     #===========================================================================
 
-    feat=raw_input("pick your feat (d=digits,b=binaries,w=words,h=historicalDates,s=SpeedCards,c=Cards,a=AbstractImages,n=NameAndFaces) : ")
+    feat=raw_input("pick your discipline (d=digits,b=binaries,w=words,h=historicalDates,s=SpeedCards,c=Cards,a=AbstractImages,n=NameAndFaces) : ")
 
     #===========================================================================
     # Set defaults values
@@ -23,29 +23,30 @@ if __name__ == "__main__":
 
     if(feat=="")or(feat=="d"):
         feat="d"
-        sep,row,col,memoTime,restiTime,sepSign=2,20,40,300,900,"|"
+        sep,row,col,memoTime,restiTime,sepSign,uniBloc=2,20,40,300,900,"|",False
 
     if(feat=="h"):
-        sep,row,col,memoTime,restiTime,sepSign=1,60,1,300,900,"|"
+        sep,row,col,memoTime,restiTime,sepSign,uniBloc=1,60,1,300,900,"|",True
 
     if(feat=="w"):
         freqMax=smartRawInput("N Most frequent words",8000,int)
-        sep,row,col,memoTime,restiTime,sepSign=1,20,5,300,900,"|"
+        sep,row,col,memoTime,restiTime,sepSign,uniBloc=1,20,5,300,900,"|",True
 
     if(feat=="b"):
-        sep,row,col,memoTime,restiTime,sepSign=6,25,30,300,900,"|"
+        sep,row,col,memoTime,restiTime,sepSign,uniBloc=6,25,30,300,900,"|",False
 
     if(feat=="s"):
-        row,col,sep,memoTime,restiTime,sepSign=1,52,3,300,900,"|"
+        row,col,sep,memoTime,restiTime,sepSign,uniBloc=1,52,3,300,900,"|",False
 
     if(feat=="c"):
-        row,col,sep,memoTime,restiTime,sepSign=2,52,3,600,1200,"|"
+        row,col,sep,memoTime,restiTime,sepSign,uniBloc=2,52,3,600,1200,"|",False
 
     if(feat=="a"):
-        sep,row,col,memoTime,restiTime,sepSign=1,2,5,300,900,"|"#2->20
+        sep,row,col,memoTime,restiTime,sepSign,uniBloc=1,2,5,300,900,"|",True
 
     if(feat=="n"):
-        sep,row,col,memoTime,restiTime,sepSign=1,2,5,300,900,"|"#2->20
+        sep,row,col,memoTime,restiTime,sepSign,uniBloc=1,2,5,300,900,"|",True
+        freqMax=smartRawInput("N Most frequent names",5000,int)
     #===========================================================================
     # Override default values
     #===========================================================================
@@ -57,6 +58,8 @@ if __name__ == "__main__":
         sep=smartRawInput("number cards to display each time",sep,int)
     memoTime=smartRawInput("how much time to learn (s)",memoTime,float)
     restiTime=smartRawInput("how much time to write (s)",restiTime,float)
+
+
 
     #memoTime=2    #commented line for debugging purpose
 
@@ -105,6 +108,6 @@ if __name__ == "__main__":
                 checker="y"
         if(systemDic!=None):
             globalReport=[attempt,feat,str(row), str(col),str(memoTime),str(restiTime),sepSign,str(round(time.time()))]
-            reportDatas(solution,answer,systemDic,errorsDic,globalReport,locis,checker,ff.revert)
+            reportDatas(solution,answer,systemDic,errorsDic,globalReport,locis,checker,ff.revert,uniBloc=uniBloc)
 
 
