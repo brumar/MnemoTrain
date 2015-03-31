@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from mnemy.disciplines import Binaries, Words, Numbers, Dates, profileLoader, errorsLoader, reportDatas,lociLoader, Cards, AbstractImages,NameAndFaces
+from mnemy.disciplines import Binaries, Words, Numbers, Dates, profileLoader, errorsLoader, reportDatas,loadAndCheckJourney, Cards, AbstractImages,NameAndFaces
 from mnemy.utils import smartRawInput
 import mnemy.PygameExperiment as pe
 import mnemy.MOL as MOL
@@ -54,6 +54,7 @@ if __name__ == "__main__":
     if(feat not in ["s","c"]):
         row=smartRawInput("how many rows",row,int)
         col=smartRawInput("how many cols",col,int)
+        sep=smartRawInput("separation every N items",sep,int)
     else:
         sep=smartRawInput("number cards to display each time",sep,int)
     memoTime=smartRawInput("how much time to learn (s)",memoTime,float)
@@ -100,14 +101,9 @@ if __name__ == "__main__":
         if(ed!="n"):
             errorsDic=errorsLoader('errors.properties')
         lo=raw_input("load journey (y/n) (default=y) : ")
-        checker="n"
         if(lo!="n"):
-            locis=lociLoader()
-            checker=raw_input("proceed to loci checker (advised) (y/n) (default=y) : ")
-            if(checker==""):
-                checker="y"
-        if(systemDic!=None):
-            globalReport=[attempt,feat,str(row), str(col),str(memoTime),str(restiTime),sepSign,str(round(time.time()))]
-            reportDatas(solution,answer,systemDic,errorsDic,globalReport,locis,checker,ff.revert,uniBloc=uniBloc)
+            locis=loadAndCheckJourney(systemDic,answer)
+        globalReport=[attempt,feat,str(row), str(col),str(memoTime),str(restiTime),sepSign,str(round(time.time()))]
+        reportDatas(solution,answer,systemDic,errorsDic,globalReport,locis,ff.revert)
 
 

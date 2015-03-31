@@ -30,46 +30,34 @@ def find(l, elem):
         return row, column
     return -1
 
-def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,checker="n",revert=False,uniBloc=False): #too complex
+def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,revert=False): #too complex
     if(revert): # columns are taken as lines in order to compare columns by columns
         sol=zip(*sol)
         ans=zip(*ans)
     fsol=[item for sublist in sol for item in sublist]#flatten sol
     fans=[item for sublist in ans for item in sublist]
-    blocs=system["system"].split(",")
     currentLoci=""
     indexAns=0
     indexLoci=0
     cont=True
     localReport=[]
     spot=0
-    lastLoci=["",""]
-    if(uniBloc)and(system==None): #if uniBloc is true, it means that errors can be processed one by one (1 item = 1 image)
+    if(system==None): #if uniBloc is true, it means that errors can be processed one by one (1 item = 1 image)
         blocs=["_"]
-    #if loci is not defined, default values avoiding bugs
+        size=1
+    else:
+        blocs=system["system"].split(",")
     if(locis==None):
         indexLoci=0
         currentLoci=["",""]
     while cont:
         for b,bloc in enumerate(blocs):
             if(locis!=None):
-                #print(locis)
-                #print(indexLoci)
-                try:
-                    currentLoci=locis[indexLoci]
-                except IndexError:
-                    decision=raw_input("your journey seems too short for this feat. This also may be dued to incorrect profile settings.\n reload another journey(r), use blank locis(b), quit(q) : ")
-                    if(decision=="r"):
-                        raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
-                        locis=lociLoader()
-                        reportDatas(sol,ans,system,errorDic,globalReport,locis,checker="y") # restart with new locis
-                        return
-                    if(decision=="q"):
-                        currentLoci=["",""]
-                        locis=None #with locis = None, we never enter this loci block
+                currentLoci=locis[indexLoci]
                 indexLoci+=1
             for image in bloc:
-                size=int(system["imagesSize"][image])
+                if(system!=None):
+                    size=int(system["imagesSize"][image])
                 if(indexAns+size>len(fans)):
                     cont=False
                     break
@@ -82,31 +70,79 @@ def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,c
                 er=""
                 if(correct==False):
                     if(errorDic!=None):
-                        message=errorsPickerMessage(errorDic)+"\n you can also write a new error \n"
-                        print(message)
-                        print("Error : at %s (loci %d), %s was %s, not %s"%(currentLoci[1],indexLoci,image,solution,answer) )
-                        er=raw_input("your choice : ")
-                        try:
-                            ide=int(er)
-                            if ide in (errorDic["index"]).keys():
-                                er=errorDic["index"][ide]
-                        except :
-                            pass
+                        er=labelError(errorDic,currentLoci,indexLoci,image,solution,answer)
                 localReport.append([answer,solution,correct,er,image,currentLoci[0],currentLoci[1],b,indexLoci,spot])
-                lastLoci=currentLoci
                 indexAns+=size
-    if(checker=="y")and(locis!=None):
-        # this loci checker must be placed at the beginning !
-        checked=raw_input("the last loci you used was %s, containing %s, right ? (y/n) : "%(lastLoci[1],solution))#lastLoci = Trick to avoid strange bug
-        if(checked=="n"):
-            raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter")
-            locis=lociLoader()
-            reportDatas(sol,ans,system,errorDic,globalReport,locis,checker="y")
-        else:
-            printReports(globalReport,localReport)
-    else:
         printReports(globalReport,localReport)
 
+
+def labelError(errorDic,currentLoci,indexLoci,image,solution,answer):
+    message=errorsPickerMessage(errorDic)+"\n you can also write a new error \n"
+    print(message)
+    print("Error : at %s (loci %d), %s was %s, not %s"%(currentLoci[1],indexLoci,image,solution,answer) )
+    er=raw_input("your choice : ")
+    try:
+        ide=int(er)
+        if ide in (errorDic["index"]).keys():
+            er=errorDic["index"][ide]
+    except : # case : a new error is written
+        pass
+    return er
+
+def loadAndCheckJourney(systemDic,answer):
+    while True:
+        locis=lociLoader()
+        status=lociChecker(locis,systemDic,answer)
+        if(status=="y"):
+            return locis
+        if(status=="noloci"):
+            return None
+        else:
+            option=raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter, write q to quit")
+            if(option=="q"):
+                return None
+
+def lociChecker(locis,system,answer):
+    answer=[item for sublist in answer for item in sublist]
+    decision="y"
+    if(system==None):
+        decision=raw_input("no system for this feat ; one item by loci ? (y/n) (default=n) : ")
+        if decision!="n":
+            blocs=["_"]
+        else:
+            return "noloci"
+    else:
+        blocs=system["system"].split(",")
+    lastThingStored,indexLoci=findLastLociLastItem(blocs,answer,system)
+    try:
+        lastLoci=locis[indexLoci]
+    except:
+        print("your journey seems too short for this feat")
+        return "n"
+
+    checked=raw_input("the last loci you used was %s, containing %s, right ? (y/n) (default=y) : "%(lastLoci[1],lastThingStored))#lastLoci = Trick to avoid strange bug
+    if(checked==""):
+        return "y"
+    return checked
+
+def findLastLociLastItem(blocs,answer,system):
+    cursorAnswer=0;
+    indexLoci=0;
+    cont=True
+    while cont:
+        for bloc in blocs:
+            for image in bloc:
+                if(system!=None):
+                    size=int(system["imagesSize"][image])
+                else:
+                    size=1
+                if (cursorAnswer+size)<len(answer):
+                    cursorAnswer+=size# more than one item can be stored ....
+                    lastThingStored=answer[cursorAnswer:cursorAnswer+size]
+                    lastThingStored=''.join(lastThingStored)
+                else:#we set everything to break all the loops
+                    return lastThingStored,indexLoci
+            indexLoci+=1 # in only one loci
 
 def printReports(globalReport,localReport):
     with open(datas, 'ab') as f:
