@@ -11,11 +11,16 @@ if __name__ == "__main__":
 
     training=smartRawInput("Special training(s) or test yourself(t)","s")
     if(training=="s"):
-        train=raw_input("pick your discipline (d=digits,b=binaries,w=words,h=historicalDates,s=SpeedCards,c=Cards,a=AbstractImages,n=NameAndFaces,k=spokenNumber) : ")
+        train=raw_input("pick your discipline (d=digits,b=binaries,w=words,h=historicalDates,c=Cards,a=AbstractImages,n=NameAndFaces,k=spokenNumber) : ")
         if(train=="k"):
             ff=SpokenNumbers()
-        if(train=="d"):
+        elif(train=="d"):
             ff=Numbers()
+        elif(train=="c"):
+            ff=Cards()
+        else:
+            raise Exception("sorry no training game for this feat")
+
         ff.trainingGame()
     else:
         #===========================================================================
@@ -103,10 +108,10 @@ if __name__ == "__main__":
             pr=raw_input("load profile (y/n) (default=y) : ")
             locis,systemDic,errorsDic=None,None,None
             if(pr!="n"):
-                systemDic=profileLoader('profile.properties',feat,row,col)
+                systemDic=profileLoader('user/profile.properties',feat,row,col)
             ed=raw_input("load errors Dic (y/n) (default=y) : ")
             if(ed!="n"):
-                errorsDic=errorsLoader('errors.properties')
+                errorsDic=errorsLoader('user/errors.properties')
             lo=raw_input("load journey (y/n) (default=y) : ")
             if(lo!="n"):
                 locis=loadAndCheckJourney(systemDic,answer)

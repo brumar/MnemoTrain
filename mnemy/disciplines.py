@@ -15,13 +15,14 @@ from mnemy.training import lastItems,waiter,convertDic,computeProbabilityVector,
 import pickle
 import winsound
 
-locipath="./Loci"
+locipath="./user/Loci"
 datas="./rawDatas/feats.csv"
 f2=open('./rawDatas/global.txt', 'a') #print globalMessages
 soundpath="spokenNumbersAudioFiles/french/"
 pickleTrainingSpoken="saveSpokenNumberGame.p"
 pickleRtNumbers="saveRt.p"
 csvReactionTime='./rawDatas/reactionTimes.csv'
+recallDir="./recallMaterial/"
 
 #these options should not be there : TODO: fix this
 
@@ -286,7 +287,7 @@ class Feat:
         self.answer=[]
         self.table=""#string representation of the solution
         self.indent=indent
-        self.tempFile=tempFile
+        self.tempFile=recallDir+tempFile
         self.blocMode=blocMode
         self.revert=revert
         self.attempt=0
@@ -531,7 +532,7 @@ class Numbers(Feat):
     def generateItem(self):
         return random.randint(0, 9)
 
-    def trainingGame(self,mode="amort"):
+    def trainingGame(self,mode="amort"): # TODO: some functions must be taken from a parent class reserved for reaction time training
         if(mode=="amort"):
             initDic={}
             f1=open(csvReactionTime, 'a')
@@ -664,7 +665,7 @@ class Words(Feat):
             return random.choice(self.nouns)
 
 class Cards(Feat, PygameExperiment):
-    def __init__(self,row, col, memoTime,restiTime,sep,tempFile="temp.txt",manyDecks=False):
+    def __init__(self,row=1, col=1, memoTime=300,restiTime=900,sep=2,tempFile="temp.txt",manyDecks=False):
         longestStreak=(row==1)# points counting differs for speed cards
         Feat.__init__(self, row, col,memoTime,restiTime,separatorPlaceHolder=sep,tempFile="cards_temp.txt",blocMode=True,longestStreak=longestStreak)
         PygameExperiment.__init__(self, filename=None, subject = "John Doe", debug = False,system="PA",manyDecks=manyDecks,sep=sep)
@@ -691,6 +692,12 @@ class Cards(Feat, PygameExperiment):
         message2="feat : %s, memotime : %s, points : %s , time : %s \n"%(str(self.__class__.__name__),str(self.memoTime),str(points),t)
         f2.write(message2)
 
+    def trainingGame(self):
+        nbCards=smartRawInput("nb cards",1,int)
+        self.prepareDeck()
+        self.freeDisplay(nbCards,True)
+        self.ending()
+
 class AbstractImages(Feat):
     def __init__(self, nbRows, lengthColumn,memoTime,restiTime,blocMode=True):
         Feat.__init__(self, nbRows, lengthColumn,memoTime,restiTime,blocMode=blocMode,tempFile="images_temp.txt")
@@ -698,11 +705,11 @@ class AbstractImages(Feat):
         self.buildCollection("./abstractImages")#put 2 extra arguments + sizecell=20
         self.tableRepresentation=[]
         self.tableRepresentationRecall=[]
-        self.path="abstractImages"
+        self.path="../abstractImages/"
 
     def beforeRecall(self):
         self.shuffleTable()
-        recallsheet="recall.html"
+        recallsheet="./recallMaterial/recall.html"
         tgen.createTemplate(self.tableRepresentationRecall,recallsheet,self.path)
         openFileMultipleOs(recallsheet)
         self.buildSolution()
@@ -731,7 +738,7 @@ class AbstractImages(Feat):
 
     def displayLearningMaterial(self):
         self.tableRepresentation=self.buildTable()
-        sheetName="learn.html"
+        sheetName="./recallMaterial/learn.html"
         tgen.createTemplate(self.tableRepresentation,sheetName,self.path)
         openFileMultipleOs(sheetName)# windows only, for mac : os.system("open "+filename)
         time.sleep(self.memoTime)
@@ -757,13 +764,13 @@ class NameAndFaces(Feat):
         self.allNames=[]
         self.allNames.extend(self.maleNames)
         self.allNames.extend(self.FemaleNames)
-        self.sheetName="learnFaces.html"
+        self.sheetName="recallMaterial/learnFaces.html"
         self.solution={}
         self.imageToNames={}
         self.solutionAsImages={}
         self.tableImage=[]
         self.tableImageRecall=[]
-        self.path="faces"
+        self.path="../faces/"
 
     def bindNamesToImages(self):
         ta=[]
@@ -788,7 +795,7 @@ class NameAndFaces(Feat):
     def beforeRecall(self):
         self.shuffleTable()#self.tableImageRecall
         self.prepareImageRecall()
-        recallsheet="recall.html"
+        recallsheet="./recallMaterial/recall.html"
         tgenF.createTemplate(self.tableImageRecall,recallsheet,self.path)
         openFileMultipleOs(recallsheet)
         self.buildSolution()

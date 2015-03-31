@@ -1,7 +1,7 @@
 import jinja2
-TEMPLATE_FILE = "templateFaces.html"
+TEMPLATE_FILE = "./templatesJinja/templateFaces.html"
 
-def createTemplate(table,sheetName="learnFaces.html",path="./"): #table is a list of lists
+def createTemplate(table,sheetName="learnFaces.html",path="../"): #table is a list of lists
     string=generateTemplate(table,path)
     with open(sheetName, "wb") as f:
         f.write(string)

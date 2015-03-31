@@ -22,7 +22,7 @@ td {
   {% for imageRow in dicImages %}
   <tr>
     {% for triplet in imageRow %}
-    <td><img width="200px" src="{{path}}/{{triplet[0]}}"><br>{{triplet[1]}} {{triplet[2]}}</td>
+    <td><img width="200px" src="{{path}}{{triplet[0]}}"><br>{{triplet[1]}} {{triplet[2]}}</td>
   {% endfor %}
   </tr>
   {% endfor %}

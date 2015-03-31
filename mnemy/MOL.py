@@ -60,7 +60,9 @@ class Deck(Collection):
         Collection.__init__(self, deck, nb_display, recall_keys_cards, show_as_text, picts)
 
 
-        
+
+
+
 
 
 
