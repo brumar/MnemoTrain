@@ -74,9 +74,12 @@ class PygameExperiment():
 ##        if new_line:
 ##            self.data_file.write("\n")
 
-    def writeRt(self,trials,timeElapsed,item):
-
-        self.rToutput.write(self.system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(item)+ ";cardsV1\n")
+    def writeRt(self,trials,timeElapsed,item,specificReactionTime=False):
+        if(specificReactionTime):
+            mode="cardsRT"
+        else:
+            mode="cards"
+        self.rToutput.write(self.system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(item)+ ";"+mode)
 
     def pictureToTextNotation(self,pic):
         pic=pic.replace("cartes/","")
@@ -320,14 +323,13 @@ class PygameExperiment():
         return chosenpictures
 
 
-    def freeDisplay(self,nbDisplay):
+    def freeDisplay(self,nbDisplay,specificReactionTime=False):
         self.pgInit()
+        # Need to store reaction time !
         # nb display is now an argument
         # will work only for pictures
-        textual = self.collection.isText
         toExplore = self.collection.elements
-        if not(textual):
-            pictures = self.collection.pictures
+        pictures = self.collection.pictures
         c = True
         log = []
         timeLog = []
@@ -347,7 +349,7 @@ class PygameExperiment():
                         item=""
                         for picture in pictures:
                             item+=self.pictureToTextNotation(picture) #not really fancy but do the trick for the moment
-                        self.writeRt(trials, float(time)/1000, item)
+                        self.writeRt(trials, float(time)/1000, item,specificReactionTime)
                         last_time=pg.time.get_ticks()
                     if event.key == pg.K_ESCAPE:
                         c = False
