@@ -73,7 +73,7 @@ def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,r
                         er=labelError(errorDic,currentLoci,indexLoci,image,solution,answer)
                 localReport.append([answer,solution,correct,er,image,currentLoci[0],currentLoci[1],b,indexLoci,spot])
                 indexAns+=size
-        printReports(globalReport,localReport)
+    printReports(globalReport,localReport)
 
 
 def labelError(errorDic,currentLoci,indexLoci,image,solution,answer):
