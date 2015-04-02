@@ -26,7 +26,6 @@ Hopefully I will reduce my commit rythm. Here are some todo notes for my future 
 Don't hesitate to contact me if you need.
 
 ## Future tasks :
-- Allows precise data reporting even if memory system is not specified.
 - Manual for users or at least commented lines in recall txt files.
 - Implement spoken numbers as a discipline (only as training script for the moment).
 - Break disciplines.py in smaller parts.
@@ -38,9 +37,7 @@ Don't hesitate to contact me if you need.
 - Amend errors in N&F+words for phonetic errors.
 - Better html templates for N&F and abstract images.
 - Errors as class, not as list. As well as Journeys.
-- Reorganize file structure (less files in main directory, a ressources directory, a recall directory, a config directory).
 - Add Elements to error properties whenever a new error is added ("do you want to add this type of error?").
-- Launch training scripts from runFeats.py.
 - For dates, words and N&F, let the user decide to select only items he never saw before (by reading feats.csv).
 - Automatic Back up feats.csv.
 - Find a way to display remaining memorisation time.
@@ -48,7 +45,8 @@ Don't hesitate to contact me if you need.
 - Better card display in python shell (using unicode for cards).
 - Avoid useless overwriting of journey csv files.
 - More try/except.
-- Loci checker **before** error labelling.
 - global options (like directory names, file names, must be stored at a unique place).
 - compareSolutionAnswer in Feats class must be break into smaller parts.
 - Html Generators must have a parent class.
+- if no profile line linked to a feat, don't raise an exception
+- Reaction Time training scripts must have a common parent.   
