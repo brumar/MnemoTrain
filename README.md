@@ -26,8 +26,9 @@ Hopefully I will reduce my commit rythm. Here are some todo notes for my future 
 Don't hesitate to contact me if you need.
 
 ## Future tasks :
+- Setup.py should copy important resources as well as empty csv file.    
 - Manual for users or at least commented lines in recall txt files.
-- Implement spoken numbers as a discipline (only as training script for the moment).
+- Implement spoken numbers as a discipline (only as training script for the moment).   
 - Break disciplines.py in smaller parts.
 - Build a common parent class for N&F and abstract images.
 - Find better abstract images.
@@ -39,7 +40,7 @@ Don't hesitate to contact me if you need.
 - Errors as class, not as list. As well as Journeys.
 - Add Elements to error properties whenever a new error is added ("do you want to add this type of error?").
 - For dates, words and N&F, let the user decide to select only items he never saw before (by reading feats.csv).
-- Automatic Back up feats.csv.
+- Automatic csv files.   
 - Find a way to display remaining memorisation time.
 - There is no time limit implemented for card memorisation.
 - Better card display in python shell (using unicode for cards).
