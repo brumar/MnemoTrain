@@ -1,0 +1,64 @@
+Reaction Time analysis
+========================================================
+  ```{rsetup, echo=FALSE, cache=FALSE}
+## numbers >= 10^5 will be denoted in scientific notation,
+## and rounded to 2 digits
+options(scipen = 1, digits = 4)
+```
+
+## Introduction     
+This fourth analysis is related to a new training script.  
+
+```{recho=FALSE,}
+library(ggplot2)
+graphics.off()
+t=read.csv2("../rawDatas/reactionTimes.csv",sep=";",colClasses=c("factor","numeric","numeric","numeric","factor","factor","numeric","numeric","numeric"),dec=".")
+outlierFilter=t$time<5
+t=t[outlierFilter,]
+means.t=tapply(t$time,t$item, mean)
+hist(means.t)
+vari=var(t$time)
+mean=mean(t$time)
+outlierBound=mean+2*sqrt(vari)
+outlierFilter1=(t$time<outlierBound)&(t$time>0.45)
+t=t[outlierFilter1,]
+means.t=tapply(t$time,t$item, mean)
+var.t=tapply(t$time,t$item, var)
+```
+## analysis after outliers filtering
+
+### before the new script
+```{r}
+n=3
+means.first3=tapply(t$time,t$item, function(i) mean(head(i, n)))
+sort(means.first3)
+m=mean(means.first3)
+s=var(means.first3)
+m
+```
+At the begginning we had a mean of `r m` s. and a var of `r s`
+### after the new script
+```{r}
+n=3
+means.tlast3=tapply(t$time,t$item, function(i) mean(tail(i, n)))
+sort(means.tlast3)
+m2=mean(means.tlast3)
+s2=var(means.tlast3)
+m2
+```
+After the script we had a mean of `r m2` s. and a var of `r s2`
+## Conclusions
+In `r nrow(t)` trials a diminishing of `r m-m2` s has been observed, which is consistent with the outcomes of the previous training scripts. More importantly, the variance has been reduced almost by half ( `r 100*((s-s2)/s)` % ).
+### Box plots
+```{r}
+boxplot(cbind(means.first3,means.tlast3))
+stripchart(means.first3, 
+           vertical = TRUE, method = "jitter", 
+           pch = 21, col = "blue", bg = "bisque",
+           add = TRUE) 
+
+stripchart(means.tlast3, 
+           vertical = TRUE, method = "jitter", 
+           pch = 21, col = "red", bg = "bisque",
+           add = TRUE,at=2) 
+```
