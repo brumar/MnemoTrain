@@ -11,7 +11,12 @@ import pygame as pg
 import random as rd
 import MOL
 import time
+from mnemy.utils import smartRawInput
+from mnemy.training import lastItems,waiter,convertDic,computeProbabilityVector,takeItem,printNumber,updateRTmeanVector
+import pickle
 
+extension=".jpg"
+pickleRtCards="saveRtCards.p"
 background_color = (155, 155, 155)
 text_color = (10, 10, 10)
 font_instructions = "timesnewroman"
@@ -28,6 +33,7 @@ input_keys = {97: 'q', 98: 'b', 99: 'c', 100: 'd', 101 : 'e', \
                  56:"8", 57:"9"}
 
 time_highlight = 500
+
 
 class PygameExperiment():
 
@@ -53,6 +59,64 @@ class PygameExperiment():
         self.nbDisplay=sep
         #Image    indexItem    timestamp    time    item    context    extra_1    extra_2
 
+    def trainingRT(self,nbCards=1,specificReactionTime=False):
+        initDic={}
+        system = smartRawInput('images to train (e.g PAP,PA,P,A,major...)',"PA")
+        coef=smartRawInput("attenuation coefficient in %",3.52649,float)
+        c=1+float(coef)/100
+        t=smartRawInput("how much practice in seconds",180,float)
+        inhib=smartRawInput("minimal gap between items",3,int)
+        lastIt=lastItems(inhib)
+        try:
+            dic = pickle.load( open( pickleRtCards, "rb" ) )
+        except : # if no data stored start with a home made dictionnary
+            #TODO : initDic Built
+            #TODO : more system than 2 digits
+            initDic={"2C":1,"2D":1,"2H":1,"2S":1,"3C":1,"3D":1,"3H":1,"3S":1,"4C":1,"4D":1,"4H":1,"4S":1,"5C":1,"5D":1,"5H":1,"5S":1,"6C":1,"6D":1,"6H":1,"6S":1,"7C":1,"7D":1,"7H":1,"7S":1,"8C":1,"8D":1,"8H":1,"8S":1,"9C":1,"9D":1,"9H":1,"9S":1,"AC":1,"AD":1,"AH":1,"AS":1,"JC":1,"JD":1,"JH":1,"JS":1,"KC":1,"KD":1,"KH":1,"KS":1,"QC":1,"QD":1,"QH":1,"QS":1,"TC":1,"TD":1,"TH":1,"TS":1}             
+            dic=convertDic(initDic)
+            dic=computeProbabilityVector(dic)
+        trials=0
+        self.pgInit()
+        self.write_instruction("enter to pass, escape to quit", self.font_stimuli)
+        self.wait_enter()
+        startExp= time.clock()
+#         while(True):
+#             startTrial= time.clock()
+#             trials+=1
+#             item=takeItem(vec,lastIt)
+#             lastIt.add(item)
+        start = pg.time.get_ticks()
+        last_time = start
+        cont=True
+        while cont:
+            pg.display.flip()
+            for event in pg.event.get():
+                if event.type==pg.KEYDOWN:
+                    if event.key == pg.K_RETURN :
+                        dicItem=takeItem(dic,lastIt)
+                        lastIt.add(dicItem)
+                        item="cartes/"+dicItem+extension
+                        self.display_pictures([item])
+                        trials+=1
+                        timeElapsed=pg.time.get_ticks()- last_time
+                        if(timeElapsed>4):
+                            timeElapsed_tosend=2
+                        if(timeElapsed<0.4):
+                            timeElapsed_tosend=1
+                        dic=updateRTmeanVector(dic,dicItem,timeElapsed_tosend)
+                        dic=computeProbabilityVector(dic,c)
+                        self.rToutput.write(self.system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(dicItem)+ ";"+"geometricRT")
+                        last_time=pg.time.get_ticks()
+                    if event.key == pg.K_ESCAPE or((time.clock()-startExp)>t):
+                        cont = False
+                        break
+        pickle.dump( dic, open( pickleRtCards, "wb" ) )
+        self.write_instruction("during your training during %d s, you have seen %d items"%(t,trials))
+        self.wait_enter()
+
+            #f1.write(system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(item)+ ";geometricOdd;"+str(inhib)+";"+str(c)+";"+str(t)+"\n")
+          #TODO: More complete output
+            
     def pgInit(self):
         pg.init()
         pg.mouse.set_visible(False)
@@ -83,7 +147,7 @@ class PygameExperiment():
 
     def pictureToTextNotation(self,pic):
         pic=pic.replace("cartes/","")
-        pic=pic.replace(".bmp","")
+        pic=pic.replace(extension,"")
         return pic;
 
     def map_data_file(self, headers, *args):
@@ -261,6 +325,9 @@ class PygameExperiment():
 
     def wait_space(self):
         self.wait_input(pg.K_SPACE)
+        
+    def wait_enter(self):
+        self.wait_input(pg.K_RETURN)
 
     def space_instruction(self, text, name_font = None):
         if name_font == None:
@@ -336,7 +403,7 @@ class PygameExperiment():
         start = pg.time.get_ticks()
         last_time = start
         trials=0
-        self.write_instruction("espace to pass, q to quit", self.font_stimuli)
+        self.write_instruction("enter to pass, q to quit", self.font_stimuli)
         while c:
             pg.display.flip()
             for event in pg.event.get():
