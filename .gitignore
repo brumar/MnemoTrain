@@ -20,3 +20,9 @@ rawDatas/numbers - Copie.csv
 .pydevproject
 dates/dates.csv
 Training_analysis/figure/
+*.pyc
+nameTaker.py
+faces/
+abstractImages/
+names/
+trash/
