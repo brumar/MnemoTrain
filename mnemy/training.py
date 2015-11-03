@@ -35,66 +35,53 @@ def waiter():
     printNumber("1")
     time.sleep(1)
 
-def takeItem(vec,lastIt):
+def takeItem(dic,lastIt):
     while True:# loop related to last Item checking
         r=rd.random()
-        i=0
         cumul=0
-        while True:
+        for item,proba in dic["probas"].iteritems():
             try:
-                cumul+=vec[i] #out of range can occur...
+                cumul+=proba #out of range can occur...
             except:
-                return takeItem(vec,lastIt)# in this case the function is called again
+                return takeItem(dic,lastIt)# in this case the function is called again
             if(r<cumul):
-                if(not lastIt.contains(i)): #...because of this filter
-                    return i
-            i+=1
+                if(not lastIt.contains(item)): #...because of this filter
+                    return item
 
-
+    
 def computeProbabilityVector(dic,c=1.0352649):
     d={}
     for index,dicRt in dic.iteritems():
-        d[index]=dicRt[2]
+        if(index!="probas"):
+            d[index]=dicRt[2]
     #print(d)
     sorted_x = sorted(d.items(), key=operator.itemgetter(1))
     coeff=1
-    d2={}
     sumrt=0
+    dic["probas"]={}
     for t in sorted_x:
-        d2[t[0]]=coeff
+        dic["probas"][t[0]]=coeff
         sumrt+=coeff
         coeff*=c
         # the 20th first elements got 50% chance, 20-40 : 25% etc....
         # if one item are 20 spot later, it has twice less probability to occur
-    v=[]
-    for i in range(100):
-        v.append(d2[i])
-    #print(d2,v)
-    vec = [x / sumrt for x in v]
-    return vec
+    for index2,dicRt2 in dic["probas"].iteritems():
+        dic["probas"][index2]=dic["probas"][index2]/sumrt
+    return dic
 
 def updateRTmeanVector(dic=None,item=None,rtVal=None):
-    #print(dic)
-    if(dic==None):
-        dic={}
-        for i in range(100):
-            dic[i]={}
-            dic[i][0]=1
-            dic[i][1]=1
-            dic[i][2]=1
-    else:
-        vals=dic[item]
-        newVal=0.25*vals[0]+0.25*vals[1]+0.25*vals[2]+0.25*rtVal
-        vals[0]=vals[1]
-        vals[1]=vals[2]
-        vals[2]=newVal
-        dic[item]=vals
+    vals=dic[item]
+    newVal=0.25*vals[0]+0.25*vals[1]+0.25*vals[2]+0.25*rtVal
+    vals[0]=vals[1]
+    vals[1]=vals[2]
+    vals[2]=newVal
+    dic[item]=vals
     return dic
 
 def convertDic(initDic):
     dic={}
-    for k,rt in initDic.iteritems():
-        i=int(k)
+    dic["probas"]={}
+    for i,rt in initDic.iteritems():
         dic[i]={}
         dic[i][0]=rt
         dic[i][1]=rt
