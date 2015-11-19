@@ -8,7 +8,6 @@ import time
 #    TODO : avoid permission denied error by looping
 
 if __name__ == "__main__":
-
     training=smartRawInput("Special training(s) or test yourself(t)","s")
     if(training=="s"):
         train=raw_input("pick your discipline (d=digits,b=binaries,w=words,h=historicalDates,c=Cards,a=AbstractImages,n=NameAndFaces,k=spokenNumber) : ")
