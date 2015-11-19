@@ -573,7 +573,7 @@ class Numbers(Feat):
                 if(timeElapsed<0.4):
                     timeElapsed_tosend=1
                 dic=updateRTmeanVector(dic,item,timeElapsed_tosend)
-                vec=computeProbabilityVector(dic,c)
+                dic=computeProbabilityVector(dic,c)
                 f1.write(system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(item)+ ";geometricOdd;"+str(inhib)+";"+str(c)+";"+str(t)+"\n")
 
 
