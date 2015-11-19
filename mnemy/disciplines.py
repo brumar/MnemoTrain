@@ -11,7 +11,7 @@ from mnemy import tableImageGenerator as tgen
 from mnemy import tableFacesGenerator as tgenF
 from mnemy.utils import openFileMultipleOs
 from mnemy.utils import smartRawInput
-from mnemy.training import lastItems,waiter,convertDic,computeProbabilityVector,takeItem,printNumber,updateRTmeanVector
+from mnemy.training import lastItems,waiter,convertDic,computeProbabilityVector,takeItem,printNumber,updateRTmeanVector,printSumDic
 import pickle
 import winsound
 
@@ -565,6 +565,7 @@ class Numbers(Feat):
                 if (Userinput=="q")or((nt-startExp)>t):
                     pickle.dump( dic, open( pickleRtNumbers, "wb" ) )
                     print("during your training during %d s, you have seen %d items"%(t,trials))
+                    printSumDic(dic)
                     break
                 timeElapsed=nt-startTrial
                 timeElapsed_tosend=timeElapsed
