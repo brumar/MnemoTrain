@@ -98,7 +98,14 @@ def findType(system,indexItem):
     i=indexItem%len(system)
     return system[i]
 
-
+def  printSumDic(dic):
+    d={}
+    for index,dicRt in dic.iteritems():
+        if(index!="probas"):
+            d[index]=dicRt[2]
+    #print(d)
+    sorted_x = sorted(d.items(), key=operator.itemgetter(1)) 
+    print(sorted_x)
 
 def createRandomList(n,mode): # n probably useless
     v=[]
