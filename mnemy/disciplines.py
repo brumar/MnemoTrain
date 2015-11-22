@@ -605,28 +605,33 @@ class SpokenNumbers(Feat):  # TODO: much
 
     def trainingGame(self):
         N=smartRawInput("how many numbers",12,int)
-        fstep=smartRawInput("which freq step",0.05,float)
-        try:
-            dic = pickle.load( open( pickleTrainingSpoken, "rb" ) )
-            startingFreq=float(dic[N])
-        except : # if no data stored start with a home made dictionnary
-            dic={}
-            startingFreq=1
-        freq=startingFreq
-        dic[N]=startingFreq
+        fstep=smartRawInput("which freq step",0.04,float)
+        threshold=smartRawInput("max deviation (s) before increasing/decreasing numbers",0.15,float)
+        Ninc=smartRawInput("how many numbers are added when threshold is reached",6,int)
+        freq=1
         while True:
             self.displayLearningMaterial(N,freq)
             ans=raw_input("your answer : ")
             if(self.solution!=ans):
-                print("fail the answer was %s"%(self.solution))
                 freq+=fstep
+                print("wrong")
+                print("the solution: %s"%(self.solution))
+                if(abs(freq-1)>threshold)and(N-Ninc>0):
+                    if(N-Ninc>0):
+                        N=N-Ninc
+                        freq=1
+                        print("Threshold reached : settings are now %.2f for %d items"%(freq,N))
+                        
             else:
                 print("success")
                 freq-=fstep
+                if(abs(freq-1)>threshold):
+                    N=N+Ninc
+                    freq=1
+                    print("Threshold reached : settings are now %.2f for %d items"%(freq,N))                                        
             print("current freq : %.2f "%(freq))
             d=raw_input("enter to continue, q to quit : ")
             if(d=="q"):
-                pickle.dump( dic, open( pickleTrainingSpoken, "wb" ) )
                 print("you stopped at %.2f for %d items"%(freq,N))
                 return
 
