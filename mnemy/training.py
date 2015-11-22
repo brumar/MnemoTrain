@@ -104,8 +104,12 @@ def  printSumDic(dic):
         if(index!="probas"):
             d[index]=dicRt[2]
     #print(d)
-    sorted_x = sorted(d.items(), key=operator.itemgetter(1)) 
-    print(sorted_x)
+    sorted_x = sorted(d.items(), key=operator.itemgetter(1))
+    it = iter(sorted_x)
+    print("order list of reaction times based on last 4 trials")
+    for val in it:
+        print("%s : %.2f "%(val[0],float(val[1])))
+
 
 def createRandomList(n,mode): # n probably useless
     v=[]
