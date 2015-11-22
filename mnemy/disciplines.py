@@ -862,10 +862,11 @@ class NameAndFaces(Feat):
         try:
             with open(fname, 'rb') as f:
                 for line in f:
-                    ansVec=line.split(";")
-                    ansVec[1]=ansVec[1].replace("\n","")
-                    if(ansVec[1]!=""):
-                        answer[int(ansVec[0])]=ansVec[1].title().split(" ") #first letter uppercase even if the user forget it
+                    if(not line.isspace()):                     
+                        ansVec=line.split(";")
+                        ansVec[1]=ansVec[1].replace("\n","")
+                        if(ansVec[1]!=""):
+                            answer[int(ansVec[0])]=ansVec[1].title().split(" ") #first letter uppercase even if the user forget it
         except:
             raise Exception("problem with your file")
 
