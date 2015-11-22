@@ -10,7 +10,7 @@ import time
 if __name__ == "__main__":
     training=smartRawInput("Special training(s) or test yourself(t)","s")
     if(training=="s"):
-        train=raw_input("pick your discipline (d=digits,b=binaries,w=words,h=historicalDates,c=Cards,a=AbstractImages,n=NameAndFaces,k=spokenNumber) : ")
+        train=raw_input("pick your discipline (d=digits,c=Cards,k=spokenNumber) : ")
         if(train=="k"):
             ff=SpokenNumbers()
         elif(train=="d"):
