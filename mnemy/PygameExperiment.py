@@ -62,7 +62,7 @@ class PygameExperiment():
     def trainingRT(self,nbCards=1,specificReactionTime=False):
         initDic={}
         system = smartRawInput('images to train (e.g PAP,PA,P,A,major...)',"PA")
-        coef=smartRawInput("attenuation coefficient in %",3.52649,float)
+        coef=smartRawInput("attenuation coefficient in %",6.89,float)
         c=1+float(coef)/100
         t=smartRawInput("how much practice in seconds",180,float)
         inhib=smartRawInput("minimal gap between items",3,int)
