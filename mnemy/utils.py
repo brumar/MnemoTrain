@@ -24,3 +24,10 @@ def smartRawInput(message,defaultValue,operation=lambda x: x):
     if(inp!=""):
         out=operation(inp)
     return out
+
+def writeLongMessageInFile(message):
+    with open("output.txt", "w") as text_file:
+        text_file.write(message)
+    openit = smartRawInput('long output stored in output.txt, open it ? (y/n)',"n")
+    if(openit=="y"):
+        openFileMultipleOs("output.txt")

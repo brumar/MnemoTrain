@@ -2,6 +2,8 @@ import time
 import random as rd
 import itertools
 import operator
+import math
+from utils import writeLongMessageInFile,openFileMultipleOs
 
 class lastItems:
     def __init__(self,Nmax):
@@ -112,9 +114,11 @@ def  printSumDic(dic):
     #print(d)
     sorted_x = sorted(d.items(), key=operator.itemgetter(1))
     it = iter(sorted_x)
-    print("order list of reaction times based on last 4 trials")
+    message=""
+    message+="order list of reaction times based on last 4 trials"
     for val in it:
-        print("%s : %.2f "%(val[0],float(val[1])))
+        message+="\n %s : %.2f"%(val[0],float(val[1]))
+    writeLongMessageInFile(message)
 
 
 def createRandomList(n,mode): # n probably useless
