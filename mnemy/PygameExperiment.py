@@ -85,7 +85,7 @@ class PygameExperiment():
 #             trials+=1
 #             item=takeItem(vec,lastIt)
 #             lastIt.add(item)
-        start = pg.time.get_ticks()
+        start = time.clock()
         last_time = start
         cont=True
         while cont:
@@ -98,7 +98,8 @@ class PygameExperiment():
                         item="cartes/"+dicItem+extension
                         self.display_pictures([item])
                         trials+=1
-                        timeElapsed=pg.time.get_ticks()- last_time
+                        timeElapsed=time.clock()- last_time
+                        timeElapsed_tosend=timeElapsed
                         if(timeElapsed>4):
                             timeElapsed_tosend=2
                         if(timeElapsed<0.4):
@@ -106,7 +107,7 @@ class PygameExperiment():
                         dic=updateRTmeanVector(dic,dicItem,timeElapsed_tosend)
                         dic=computeProbabilityVector(dic,c)
                         self.rToutput.write(self.system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(dicItem)+ ";"+"geometricRT")
-                        last_time=pg.time.get_ticks()
+                        last_time=time.clock()
                     if event.key == pg.K_ESCAPE or((time.clock()-startExp)>t):
                         cont = False
                         break
