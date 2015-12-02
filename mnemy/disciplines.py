@@ -264,6 +264,7 @@ def errorsPickerMessage(errorsDic): #message is "describe" or "select"
     for i,error in (errorsDic["index"]).iteritems():
         message+="%s (%d)\n"%(error,i)
     return message
+        
 
 #===============================================================================
 # CLASSES
@@ -536,9 +537,15 @@ class Numbers(Feat):
         if(mode=="amort"):
             initDic={}
             f1=open(csvReactionTime, 'a')
-            system = smartRawInput('images to train (e.g PAP,PA,P,A,major...)',"PA")
-            coef=smartRawInput("attenuation coefficient in %",3.52649,float)
-            c=1+float(coef)/100
+            static = smartRawInput('do not record (y/n)',"n")
+            if(static=="n"):
+                system = smartRawInput('images to train (e.g PAP,PA,P,A,major...)',"PA")
+                coef=smartRawInput("attenuation coefficient in %",25,float)
+                meta_coef=smartRawInput("meta attenuation coefficient in %",5,float)
+                meta_coef=1+float(meta_coef)/100
+                c=1+float(coef)/100
+            else:
+                c=0
             t=smartRawInput("how much practice in seconds",180,float)
             inhib=smartRawInput("minimal gap between items",3,int)
             lastIt=lastItems(inhib)
@@ -573,9 +580,10 @@ class Numbers(Feat):
                     timeElapsed_tosend=2
                 if(timeElapsed<0.4):
                     timeElapsed_tosend=1
-                dic=updateRTmeanVector(dic,item,timeElapsed_tosend)
-                dic=computeProbabilityVector(dic,c)
-                f1.write(system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(item)+ ";geometricOdd;"+str(inhib)+";"+str(c)+";"+str(t)+"\n")
+                if(static=="n"):
+                    dic=updateRTmeanVector(dic,item,timeElapsed_tosend)
+                    dic=computeProbabilityVector(dic,c,meta_coef)
+                    f1.write(system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(item)+ ";geometricOdd;"+str(inhib)+";"+str(c)+";"+str(t)+"\n")
 
 
 class SpokenNumbers(Feat):  # TODO: much

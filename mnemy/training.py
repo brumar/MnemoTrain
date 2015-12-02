@@ -49,20 +49,26 @@ def takeItem(dic,lastIt):
                     return item
 
     
-def computeProbabilityVector(dic,c=1.0352649):
+def computeProbabilityVector(dic,c=1.0352649,meta_c=1):
     d={}
     for index,dicRt in dic.iteritems():
         if(index!="probas"):
             d[index]=dicRt[2]
     #print(d)
+    number_items=len(d)
     sorted_x = sorted(d.items(), key=operator.itemgetter(1))
     coeff=1
     sumrt=0
+    c=((c-1)/math.pow(meta_c, number_items))+1 
+    # the attenuation coefficient at start for easy items
+    # will be multiplied by meta_c at each step, so must be initialized
+    # with this line to reach, at the last item, the attenuation (c) given 
     dic["probas"]={}
     for t in sorted_x:
         dic["probas"][t[0]]=coeff
         sumrt+=coeff
         coeff*=c
+        c=(c-1)*meta_c+1
         # the 20th first elements got 50% chance, 20-40 : 25% etc....
         # if one item are 20 spot later, it has twice less probability to occur
     for index2,dicRt2 in dic["probas"].iteritems():
