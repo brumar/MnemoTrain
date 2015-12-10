@@ -181,22 +181,32 @@ def updateUuid(fileName):
             writer.writerow(lr)
 
 
-def lociLoader():
-    lociFiles = [ f for f in listdir(locipath) if (isfile(join(locipath,f))and f[-4:]==".csv" )]
-    message="load options : "
-    for i,lf in enumerate(lociFiles):
-        message+="\n -"+lf+"("+str(i)+") "
-    message+="\n quit loading locis (q)"
-    message+="\n choice : "
-    il=raw_input(message)
+
+def multipleChoice(alist):
+    """
+    Let the user choose amongst many actions, the index of a list is returned
+    """
+    message = "load options : "
+    for i, lf in enumerate(alist):
+        message += "\n -" + lf + "(" + str(i) + ") "
+    
+    message += "\n quit loading (q)"
+    message += "\n choice : "
+    il = raw_input(message)
     if il=="q":
         return None
-    chosenFile=lociFiles[int(il)]
+    return int(il)
+
+def lociLoader():
+    lociFiles = [ f for f in listdir(locipath) if (isfile(join(locipath,f))and f[-4:]==".csv" )]
+    index = multipleChoice(lociFiles)
+    chosenFile=lociFiles[index]
     fileName=join(locipath,chosenFile)
     updateUuid(fileName)
     locis=buildLociFromFile(fileName)
     specific=raw_input("this journey contains %d locis, do you want to start at a specific loci (y/n) default=n : "%len(locis))
     cp=1
+    message=""
     if(specific=="y"):
         message="index : "
         for indexLoc,loc in enumerate(locis):
@@ -216,30 +226,62 @@ def buildLociFromFile(filename):
 
 
 def profileLoader(profileFile,feat,row,col):
-    systemDic={}
-    try:
-        profile = dict(line.strip().split('=') for line in open(profileFile))
-    except:
-        raise Exception(profileFile+" not found")
+    """ Load the profile file of the user into a dictionnary 
+    Keyword arguments:
+    profileFile -- the path to the profile file
+    feat -- the feat to inspect
+    row -- the number of rows for this feat
+    col -- the number of rows for this feat
+    Return a dic with two keys imagesSize (a dic) and system (the name of the system)
+    
+    TODO:Recent (untested) modifications
+    """
+
+    profile=openProfile(profileFile)
     key=""
     if(feat=="w"):
         key=str(feat)+str(row) # for words, the number of row is more relevant
     else :
         key=str(feat)+str(col)
     if(key in profile):
-        system=profile[key]
-        systemDic["system"]=system
-        temp={}
-        limages=list(set(system)-set(','))
-        for image in limages:
-            try:
-                temp[image]=profile[image]
-            except:
-                raise Exception("no size affected to "+image)
-        systemDic["imagesSize"]=temp
-    else:
-        raise Exception("no system for this feat")
-    return systemDic
+        return createSystem(key,profile[key],profile)
+
+def openProfile(profileFile):
+    try:
+        profile = dict(line.strip().split('=') for line in open(profileFile))
+    except:
+        raise Exception(profileFile+" not found")
+    return profile
+
+def profileLoaderForReactionTraining(profileFile,feat):
+    """ Load the profile file of the user into a dictionnary 
+    Keyword arguments:
+    profileFile -- the path to the profile file
+    feat -- the feat to inspect
+    Return a list of dic with two keys imagesSize (a dic) and system (the name of the system)
+    """
+    systemsDic=[]
+    profile=openProfile(profileFile)
+    for key in profile:
+        if(key.startswith("rt_"+feat)):
+            systemsDic.append(createSystem(key,profile))
+    return systemsDic
+
+def createSystem(key,profile):
+    """Return a list of dic with two keys imagesSize (a dic) and system (the name of the system)
+    """
+    systemDic={}
+    systemAsString=profile[key]
+    systemDic["system"]=systemAsString
+    temp={}
+    limages=list(set(systemAsString)-set(','))
+    for image in limages:
+        try:
+            temp[image]=profile[image]
+        except:
+            raise Exception("no size affected to "+image)
+    systemDic["imagesSize"]=temp
+    return systemDic    
 
 def errorsLoader(errorsFile):
     errors={}
@@ -536,10 +578,19 @@ class Numbers(Feat):
     def trainingGame(self,mode="amort"): # TODO: some functions must be taken from a parent class reserved for reaction time training
         if(mode=="amort"):
             initDic={}
+            dics=profileLoaderForReactionTraining('user/profile.properties','d')
+            if(len(dics)!=0):
+                loadSet = smartRawInput('we have found special settings for this feat, load (y/n)',"y")
+                if(loadSet=="y"):
+                    print(dics)
+                    listOfSystem=[system["system"] for system in dics] # get the systems as a list 
+                    pick=multipleChoice(listOfSystem) # user has multiple choice
+                    selectedSystem=dics[pick] # ... do not misinterpret this
             f1=open(csvReactionTime, 'a')
             static = smartRawInput('do not record (y/n)',"n")
             if(static=="n"):
-                system = smartRawInput('images to train (e.g PAP,PA,P,A,major...)',"PA")
+                if(loadSet!="y"):
+                    system = smartRawInput('images to train (e.g PAP,PA,P,A,major...)',"PA")
                 coef=smartRawInput("attenuation coefficient in %",25,float)
                 meta_coef=smartRawInput("meta attenuation coefficient in %",5,float)
                 meta_coef=1+float(meta_coef)/100
