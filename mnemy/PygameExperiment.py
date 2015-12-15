@@ -12,9 +12,11 @@ import random as rd
 import MOL
 import time
 from mnemy.utils import smartRawInput
-from mnemy.training import lastItems,waiter,convertDic,computeProbabilityVector,takeItem,printNumber,updateRTmeanVector
+from mnemy.training import *
 import pickle
 
+pickleRt="saveRt_2.p"
+csvReactionTime2='./rawDatas/reactionTimes2.csv'
 extension=".jpg"
 pickleRtCards="saveRtCards.p"
 background_color = (155, 155, 155)
@@ -37,7 +39,7 @@ time_highlight = 500
 
 class PygameExperiment():
 
-    def __init__(self, filename=None, subject = "John Doe", debug = False,system="PA",manyDecks=False,sep=2):
+    def __init__(self, filename=None, subject = "John Doe", debug = False,system="PA",manyDecks=False,sep=2,cardPrefix=""):
         self.manyDecks=manyDecks
         self.debub=debug
         self.data_file = filename
@@ -57,66 +59,89 @@ class PygameExperiment():
         self.solution=[]
         self.viewingTime=0
         self.nbDisplay=sep
+        self.cardPrefix=cardPrefix# allow corner mode where images f corner of cards are loaded
         #Image    indexItem    timestamp    time    item    context    extra_1    extra_2
 
-    def trainingRT(self,nbCards=1,specificReactionTime=False):
-        initDic={}
-        system = smartRawInput('images to train (e.g PAP,PA,P,A,major...)',"PA")
-        coef=smartRawInput("attenuation coefficient in %",6.89,float)
-        c=1+float(coef)/100
+    def trainingRT(self): # I am a cpy paste moron here
+        dics=profileLoaderForReactionTraining('user/profile.properties','c')
+        loadSet="n"
+        if(len(dics)!=0):
+            loadSet = smartRawInput('we have found special settings for this feat, load (y/n)',"y")
+            if(loadSet=="y"):
+                listOfSystem=[system["system"] for system in dics] # get the systems as a list 
+                pick=multipleChoice(listOfSystem) # user has multiple choice
+                selectedSystem=dics[pick] # ... no pun intended
+        f1=open(csvReactionTime2, 'a')
+        nbCards=-1 #value by default to avoid bug
+        if(loadSet!="y"):
+            raw_input('no system for this feat has been selected, but you can work on single items push enter')
+            nbCards = smartRawInput('how many cards ? ',"2",int)
+            # COULD BE IMPROVED TO CREATE A SYSTEM
+            letter = smartRawInput('write a single letter to represent this system (keep the same letter later) ',"Y")
+            selectedSystem={'imagesSize': {letter: str(nbCards)}, 'system': letter}
+        pref=smartRawInput("full cards (f) of corner (r) ?","f")
+        if(pref=="r"):
+            self.cardPrefix="corner"
+        coef=smartRawInput("attenuation coefficient in %",25,float)
+        meta_coef=smartRawInput("meta attenuation coefficient in %",5,float)
+        meta_coef=1+float(meta_coef)/100
+        c=1+float(coef)/100                 
         t=smartRawInput("how much practice in seconds",180,float)
         inhib=smartRawInput("minimal gap between items",3,int)
+        record = smartRawInput('record data (y/n)',"y")
         lastIt=lastItems(inhib)
+        
         try:
-            dic = pickle.load( open( pickleRtCards, "rb" ) )
+            controlStructure = pickle.load( open( pickleRt, "rb" ) )
         except : # if no data stored start with a home made dictionnary
-            #TODO : initDic Built
-            #TODO : more system than 2 digits
-            initDic={"2C":1,"2D":1,"2H":1,"2S":1,"3C":1,"3D":1,"3H":1,"3S":1,"4C":1,"4D":1,"4H":1,"4S":1,"5C":1,"5D":1,"5H":1,"5S":1,"6C":1,"6D":1,"6H":1,"6S":1,"7C":1,"7D":1,"7H":1,"7S":1,"8C":1,"8D":1,"8H":1,"8S":1,"9C":1,"9D":1,"9H":1,"9S":1,"AC":1,"AD":1,"AH":1,"AS":1,"JC":1,"JD":1,"JH":1,"JS":1,"KC":1,"KD":1,"KH":1,"KS":1,"QC":1,"QD":1,"QH":1,"QS":1,"TC":1,"TD":1,"TH":1,"TS":1}             
-            dic=convertDic(initDic)
-            dic=computeProbabilityVector(dic)
+            controlStructure=None
+        if((controlStructure==None)or(selectedSystem['system'] not in controlStructure["system"])): # the way to get system wont work with digits only
+            # if a system is already in we do not update, can cause problem if the system of the user is updated
+            controlStructure=buildAStructure(controlStructure,selectedSystem,mode="c")
+            controlStructure["infos"]["compteur"]=controlStructure["infos"]["compteur"]+1      
         trials=0
         self.pgInit()
         self.write_instruction("enter to pass, escape to quit", self.font_stimuli)
         self.wait_enter()
-        startExp= time.clock()
-#         while(True):
-#             startTrial= time.clock()
-#             trials+=1
-#             item=takeItem(vec,lastIt)
-#             lastIt.add(item)
+        startExp=time.clock()
+        
+        ######## TRAINING LOOP ########
         start = time.clock()
         last_time = start
         cont=True
-        while cont:
-            pg.display.flip()
+        pg.display.flip()
+        
+        items,lastIt = displayItemForTrainingRT(lastIt, controlStructure,selectedSystem,nbCards)
+        itemsToDisplay=self.textTopictureNotationForCollection(items)
+        self.display_pictures(itemsToDisplay)
+        
+        while cont:           
             for event in pg.event.get():
                 if event.type==pg.KEYDOWN:
-                    if event.key == pg.K_RETURN :
-                        dicItem=takeItem(dic,lastIt)
-                        lastIt.add(dicItem)
-                        item="cartes/"+dicItem+extension
-                        self.display_pictures([item])
-                        trials+=1
-                        timeElapsed=time.clock()- last_time
-                        timeElapsed_tosend=timeElapsed
-                        if(timeElapsed>4):
-                            timeElapsed_tosend=2
-                        if(timeElapsed<0.4):
-                            timeElapsed_tosend=1
-                        dic=updateRTmeanVector(dic,dicItem,timeElapsed_tosend)
-                        dic=computeProbabilityVector(dic,c)
-                        self.rToutput.write(self.system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(dicItem)+ ";"+"geometricRT")
-                        last_time=time.clock()
-                    if event.key == pg.K_ESCAPE or((time.clock()-startExp)>t):
+                    curent=time.clock()
+                    trials+=1
+                    if event.key == pg.K_ESCAPE or((curent-startExp)>t):
+                        pickle.dump( controlStructure, open( pickleRt, "wb" ) )
+                        self.write_instruction("during your training during %d s, you have seen %d items"%(t,trials))
+                        self.wait_enter()
                         cont = False
                         break
-        pickle.dump( dic, open( pickleRtCards, "wb" ) )
-        self.write_instruction("during your training during %d s, you have seen %d items"%(t,trials))
-        self.wait_enter()
+                    timeElapsed=curent-last_time
+                    timeElapsed_tosend=timeElapsed
+                    if(timeElapsed>6)or(timeElapsed<0.3):
+                        timeElapsed_tosend=-1
+                    if(record=="y")and(timeElapsed_tosend!=-1):
+                        controlStructure=updateControlStructure(controlStructure,selectedSystem,nbCards,items,timeElapsed_tosend,c,meta_coef)
+                        f1.write(str(controlStructure["infos"]["compteur"])+";"+selectedSystem['system']+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+"".join(items)+ ";geometricOdd;"+str(inhib)+";"+str(c)+";"+str(meta_coef)+";"+str(t)+"\n")
+                    last_time=time.clock()
+                    items,lastIt = displayItemForTrainingRT(lastIt, controlStructure,selectedSystem,nbCards)
+                    itemsToDisplay=self.textTopictureNotationForCollection(items)
+                    self.display_pictures(itemsToDisplay)
+        pg.quit()
+        printSumStruc(controlStructure,selectedSystem)
 
-            #f1.write(system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(item)+ ";geometricOdd;"+str(inhib)+";"+str(c)+";"+str(t)+"\n")
-          #TODO: More complete output
+        #f1.write(system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(item)+ ";geometricOdd;"+str(inhib)+";"+str(c)+";"+str(t)+"\n")
+      #TODO: More complete output
             
     def pgInit(self):
         pg.init()
@@ -149,7 +174,12 @@ class PygameExperiment():
     def pictureToTextNotation(self,pic):
         pic=pic.replace("cartes/","")
         pic=pic.replace(extension,"")
+        pic=pic.replace(self.cardPrefix,"")
         return pic;
+    
+    def textTopictureNotationForCollection(self,items):
+        return ["cartes/"+self.cardPrefix+x+extension for x in items];
+
 
     def map_data_file(self, headers, *args):
         if type(headers).__name__ != "list":

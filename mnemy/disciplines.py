@@ -11,17 +11,18 @@ from mnemy import tableImageGenerator as tgen
 from mnemy import tableFacesGenerator as tgenF
 from mnemy.utils import openFileMultipleOs
 from mnemy.utils import smartRawInput
-from mnemy.training import lastItems,waiter,convertDic,computeProbabilityVector,takeItem,printNumber,updateRTmeanVector,printSumDic
+from mnemy.training import *
 import pickle
 import winsound
 
-locipath="./user/Loci"
-datas="./rawDatas/feats.csv"
+
+
 f2=open('./rawDatas/global.txt', 'a') #print globalMessages
 soundpath="spokenNumbersAudioFiles/french/"
 pickleTrainingSpoken="saveSpokenNumberGame.p"
-pickleRtNumbers="saveRt.p"
+pickleRt="saveRt_2.p"
 csvReactionTime='./rawDatas/reactionTimes.csv'
+csvReactionTime2='./rawDatas/reactionTimes2.csv'
 recallDir="./recallMaterial/"
 
 #these options should not be there : TODO: fix this
@@ -29,287 +30,6 @@ recallDir="./recallMaterial/"
 
 #===============================================================================
 # FUNCTIONS
-#===============================================================================
-def find(l, elem):
-    for row, i in enumerate(l):
-        try:
-            column = i.index(elem)
-        except ValueError:
-            continue
-        return row, column
-    return -1
-
-def reportDatas(sol,ans,system=None,errorDic=None,globalReport=None,locis=None,revert=False): #too complex
-    if(revert): # columns are taken as lines in order to compare columns by columns
-        sol=zip(*sol)
-        ans=zip(*ans)
-    fsol=[item for sublist in sol for item in sublist]#flatten sol
-    fans=[item for sublist in ans for item in sublist]
-    currentLoci=""
-    indexAns=0
-    indexLoci=0
-    cont=True
-    localReport=[]
-    spot=0
-    if(system==None): #if uniBloc is true, it means that errors can be processed one by one (1 item = 1 image)
-        blocs=["_"]
-        size=1
-    else:
-        blocs=system["system"].split(",")
-    if(locis==None):
-        indexLoci=0
-        currentLoci=["",""]
-    while cont:
-        for b,bloc in enumerate(blocs):
-            if(locis!=None):
-                currentLoci=locis[indexLoci]
-                indexLoci+=1
-            for image in bloc:
-                if(system!=None):
-                    size=int(system["imagesSize"][image])
-                if(indexAns+size>len(fans)):
-                    cont=False
-                    break
-                spot+=1
-                answer=fans[indexAns:indexAns+size]
-                solution=fsol[indexAns:indexAns+size]
-                answer=''.join(answer)
-                solution=''.join(solution)
-                correct=(answer==solution)
-                er=""
-                if(correct==False):
-                    if(errorDic!=None):
-                        er=labelError(errorDic,currentLoci,indexLoci,image,solution,answer)
-                localReport.append([answer,solution,correct,er,image,currentLoci[0],currentLoci[1],b,indexLoci,spot])
-                indexAns+=size
-    printReports(globalReport,localReport)
-
-
-def labelError(errorDic,currentLoci,indexLoci,image,solution,answer):
-    message=errorsPickerMessage(errorDic)+"\n you can also write a new error \n"
-    print(message)
-    print("Error : at %s (loci %d), %s was %s, not %s"%(currentLoci[1],indexLoci,image,solution,answer) )
-    er=raw_input("your choice : ")
-    try:
-        ide=int(er)
-        if ide in (errorDic["index"]).keys():
-            er=errorDic["index"][ide]
-    except : # case : a new error is written
-        pass
-    return er
-
-def loadAndCheckJourney(systemDic,answer):
-    while True:
-        locis=lociLoader()
-        status=lociChecker(locis,systemDic,answer)
-        if(status=="y"):
-            return locis
-        if(status=="noloci"):
-            return None
-        else:
-            option=raw_input("fix your loci csv files by adding or deleting locis, eventually with a csv temp file (must keep the loci id though) then push enter, write q to quit")
-            if(option=="q"):
-                return None
-
-def lociChecker(locis,system,answer):
-    answer=[item for sublist in answer for item in sublist]
-    decision="y"
-    if(system==None):
-        decision=raw_input("no system for this feat ; one item by loci ? (y/n) (default=n) : ")
-        if decision!="n":
-            blocs=["_"]
-        else:
-            return "noloci"
-    else:
-        blocs=system["system"].split(",")
-    lastThingStored,indexLoci=findLastLociLastItem(blocs,answer,system)
-    try:
-        lastLoci=locis[indexLoci]
-    except:
-        print("your journey seems too short for this feat")
-        return "n"
-
-    checked=raw_input("the last loci you used was %s, containing %s, right ? (y/n) (default=y) : "%(lastLoci[1],lastThingStored))#lastLoci = Trick to avoid strange bug
-    if(checked==""):
-        return "y"
-    return checked
-
-def findLastLociLastItem(blocs,answer,system):
-    cursorAnswer=0;
-    indexLoci=0;
-    cont=True
-    while cont:
-        for bloc in blocs:
-            for image in bloc:
-                if(system!=None):
-                    size=int(system["imagesSize"][image])
-                else:
-                    size=1
-                if (cursorAnswer+size)<len(answer):
-                    cursorAnswer+=size# more than one item can be stored ....
-                    lastThingStored=answer[cursorAnswer:cursorAnswer+size]
-                    lastThingStored=''.join(lastThingStored)
-                else:#we set everything to break all the loops
-                    return lastThingStored,indexLoci
-            indexLoci+=1 # in only one loci
-
-def printReports(globalReport,localReport):
-    with open(datas, 'ab') as f:
-        writer = csv.writer(f,delimiter=';')
-        for l in localReport:
-            l.extend(globalReport)
-            writer.writerow(l)
-    print("\n congratulations, the report has appended to "+datas)
-
-def updateUuid(fileName):
-    l=[]
-    with open(fileName, 'rb') as csvfile: #read
-        spamreader = csv.reader(csvfile, delimiter=';')
-        for row in spamreader:
-            #print(row)
-            lr=[]
-            if(len(row)==1):
-                lr.append(str(uuid.uuid1()))
-                lr.append(row[0])
-            else:
-                lr.extend(row)
-            l.append(lr)
-
-    with open(fileName, 'wb') as f: #overwrite
-        writer = csv.writer(f,delimiter=';')
-        for lr in l:
-            writer.writerow(lr)
-
-
-
-def multipleChoice(alist):
-    """
-    Let the user choose amongst many actions, the index of a list is returned
-    """
-    message = "load options : "
-    for i, lf in enumerate(alist):
-        message += "\n -" + lf + "(" + str(i) + ") "
-    
-    message += "\n quit loading (q)"
-    message += "\n choice : "
-    il = raw_input(message)
-    if il=="q":
-        return None
-    return int(il)
-
-def lociLoader():
-    lociFiles = [ f for f in listdir(locipath) if (isfile(join(locipath,f))and f[-4:]==".csv" )]
-    index = multipleChoice(lociFiles)
-    chosenFile=lociFiles[index]
-    fileName=join(locipath,chosenFile)
-    updateUuid(fileName)
-    locis=buildLociFromFile(fileName)
-    specific=raw_input("this journey contains %d locis, do you want to start at a specific loci (y/n) default=n : "%len(locis))
-    cp=1
-    message=""
-    if(specific=="y"):
-        message="index : "
-        for indexLoc,loc in enumerate(locis):
-            message+="\n -"+loc[1]+"("+str(indexLoc+1)+") "
-        message+="\n choice : "
-        chosenPosition=raw_input(message)
-        cp=int(chosenPosition)
-    return locis[cp-1:]
-
-def buildLociFromFile(filename):
-    locis=[]
-    with open(filename, 'rb') as csvfile: #read
-        spamreader = csv.reader(csvfile, delimiter=';')
-        for i,r in enumerate(spamreader):
-            locis.append(r)
-        return locis
-
-
-def profileLoader(profileFile,feat,row,col):
-    """ Load the profile file of the user into a dictionnary 
-    Keyword arguments:
-    profileFile -- the path to the profile file
-    feat -- the feat to inspect
-    row -- the number of rows for this feat
-    col -- the number of rows for this feat
-    Return a dic with two keys imagesSize (a dic) and system (the name of the system)
-    
-    TODO:Recent (untested) modifications
-    """
-
-    profile=openProfile(profileFile)
-    key=""
-    if(feat=="w"):
-        key=str(feat)+str(row) # for words, the number of row is more relevant
-    else :
-        key=str(feat)+str(col)
-    if(key in profile):
-        return createSystem(key,profile[key],profile)
-
-def openProfile(profileFile):
-    try:
-        profile = dict(line.strip().split('=') for line in open(profileFile))
-    except:
-        raise Exception(profileFile+" not found")
-    return profile
-
-def profileLoaderForReactionTraining(profileFile,feat):
-    """ Load the profile file of the user into a dictionnary 
-    Keyword arguments:
-    profileFile -- the path to the profile file
-    feat -- the feat to inspect
-    Return a list of dic with two keys imagesSize (a dic) and system (the name of the system)
-    """
-    systemsDic=[]
-    profile=openProfile(profileFile)
-    for key in profile:
-        if(key.startswith("rt_"+feat)):
-            systemsDic.append(createSystem(key,profile))
-    return systemsDic
-
-def createSystem(key,profile):
-    """Return a list of dic with two keys imagesSize (a dic) and system (the name of the system)
-    """
-    systemDic={}
-    systemAsString=profile[key]
-    systemDic["system"]=systemAsString
-    temp={}
-    limages=list(set(systemAsString)-set(','))
-    for image in limages:
-        try:
-            temp[image]=profile[image]
-        except:
-            raise Exception("no size affected to "+image)
-    systemDic["imagesSize"]=temp
-    return systemDic    
-
-def errorsLoader(errorsFile):
-    errors={}
-    try:
-        errors = dict(line.strip().split('=') for line in open(errorsFile))
-    except:
-        raise Exception(errorsFile+" not found")
-    errors["index"]={}
-    for e,error in enumerate(errors.keys()):
-        if(e!="index"):
-            errors["index"][e]=error;
-        # this dic is usefull for letting the user pick an error with an index
-    return errors
-
-def errorsPickerMessage(errorsDic): #message is "describe" or "select"
-    # TODO:  an enumeration would be better
-    message=""
-    for error,description in errorsDic.iteritems():
-        if(error!="index"):
-            message+="%s : %s \n"%(error,description)
-    message+="\n"
-    for i,error in (errorsDic["index"]).iteritems():
-        message+="%s (%d)\n"%(error,i)
-    return message
-        
-
-#===============================================================================
-# CLASSES
 #===============================================================================
 
 class Feat:
@@ -402,7 +122,6 @@ class Feat:
                         lanswer.extend(element)
                 answer.append(lanswer)
         return answer
-
 
     def compareSolutionAnswer(self,lsol,lansw):
         """ compare the recall file with the target, count the points and raise the errors"""
@@ -577,64 +296,67 @@ class Numbers(Feat):
 
     def trainingGame(self,mode="amort"): # TODO: some functions must be taken from a parent class reserved for reaction time training
         if(mode=="amort"):
-            initDic={}
             dics=profileLoaderForReactionTraining('user/profile.properties','d')
+            loadSet="n"
             if(len(dics)!=0):
                 loadSet = smartRawInput('we have found special settings for this feat, load (y/n)',"y")
                 if(loadSet=="y"):
-                    print(dics)
                     listOfSystem=[system["system"] for system in dics] # get the systems as a list 
                     pick=multipleChoice(listOfSystem) # user has multiple choice
-                    selectedSystem=dics[pick] # ... do not misinterpret this
-            f1=open(csvReactionTime, 'a')
-            static = smartRawInput('do not record (y/n)',"n")
-            if(static=="n"):
-                if(loadSet!="y"):
-                    system = smartRawInput('images to train (e.g PAP,PA,P,A,major...)',"PA")
-                coef=smartRawInput("attenuation coefficient in %",25,float)
-                meta_coef=smartRawInput("meta attenuation coefficient in %",5,float)
-                meta_coef=1+float(meta_coef)/100
-                c=1+float(coef)/100
-            else:
-                c=0
+                    selectedSystem=dics[pick] # ... no pun intended
+            f1=open(csvReactionTime2, 'a')
+            nbDigits=-1 #value by default to avoid bug
+            if(loadSet!="y"):
+                raw_input('no system for this feat has been selected, but you can work on single items push enter')
+                nbDigits = smartRawInput('how many digits ? ',"2",int)
+                # COULD BE IMPROVED TO CREATE A SYSTEM
+                letter = smartRawInput('write a single letter to represent this system (keep the same letter later) ',"Z")
+                selectedSystem={'imagesSize': {letter: str(nbDigits)}, 'system': letter}
+            coef=smartRawInput("attenuation coefficient in %",25,float)
+            meta_coef=smartRawInput("meta attenuation coefficient in %",5,float)
+            meta_coef=1+float(meta_coef)/100
+            c=1+float(coef)/100                 
             t=smartRawInput("how much practice in seconds",180,float)
             inhib=smartRawInput("minimal gap between items",3,int)
+            sepSign=smartRawInput("separator between numbers(n for none)","|")
+            if(sepSign=="n"):
+                sepSign=""
+            record = smartRawInput('record data (y/n)',"y")
             lastIt=lastItems(inhib)
+            
             try:
-                dic = pickle.load( open( pickleRtNumbers, "rb" ) )
+                controlStructure = pickle.load( open( pickleRt, "rb" ) )
             except : # if no data stored start with a home made dictionnary
-                #TODO : initDic Built
-                #TODO : more system than 2 digits
-                initDic={"00":0.856974449094,"01":0.954354421038,"02":1.14549382512,"03":0.972335362472,"04":0.865442435003,"05":0.845586146315,"06":1.166294785,"07":1.08075935703,"08":1.10255490406,"09":0.857419494188,"10":0.855345416105,"11":0.985545831014,"12":0.770835364571,"13":0.958828197199,"14":0.842853830677,"15":0.83752075361,"16":1.12890773152,"17":0.928795117379,"18":0.954391274877,"19":0.83961955642,"20":0.884804229141,"21":1.74740658601,"22":1.00925031361,"23":0.979187377514,"24":0.963826790688,"25":1.05470649183,"26":0.886336229236,"27":1.10784786175,"28":1.11975491731,"29":0.744676136393,"30":1.12951605311,"31":0.87704253073,"32":1.05017580214,"33":0.861780842815,"34":0.95555893512,"35":0.869979655748,"36":0.849511313429,"37":0.901413647956,"38":1.46334045996,"39":1.1316890301,"40":1.10228153254,"41":0.830396300061,"42":1.04315351303,"43":0.909781801947,"44":1.00760681899,"45":0.938952315331,"46":1.09702169665,"47":0.980794951304,"48":1.06631964967,"49":1.03062787279,"50":0.939073139943,"51":1.02360931572,"52":1.01562416175,"53":0.941010998772,"54":1.05097679001,"55":0.755317565799,"56":0.89105585316,"57":2.01201201902,"58":0.946855831047,"59":0.864223925792,"60":1.00444298688,"61":0.979365582153,"62":1.05567402173,"63":1.09192840279,"64":0.85822188157,"65":0.868326831041,"66":1.00938746587,"67":1.13008098981,"68":1.06426096623,"69":0.938264688004,"70":1.0561708488,"71":0.843573180295,"72":0.845546959955,"73":1.10504930251,"74":1.0088257947,"75":1.01324452336,"76":1.02180767614,"77":0.927769740945,"78":1.02776540246,"79":1.00344466769,"80":1.12976143437,"81":1.06782505902,"82":1.04683936345,"83":1.11403650769,"84":1.08585638292,"85":0.965271087977,"86":1.04934729052,"87":1.04617879337,"88":0.857334590407,"89":0.998478729504,"90":1.05510768552,"91":0.880616420111,"92":1.06581069349,"93":0.950248716763,"94":1.00918267049,"95":1.04328413424,"96":0.928264702,"97":0.908065066153,"98":0.945126966141,"99":1.13270460995}
-                dic=convertDic(initDic)
-                dic=computeProbabilityVector(dic)
+                controlStructure=None
+            if((controlStructure==None)or(selectedSystem['system'] not in controlStructure["system"])): # the way to get system wont work with digits only
+                # if a system is already in we do not update, can cause problem if the system of the user is updated
+                controlStructure=buildAStructure(controlStructure,selectedSystem,mode="d")
+                controlStructure["infos"]["compteur"]=controlStructure["infos"]["compteur"]+1
+            
             trials=0
             waiter()
-            startExp= time.clock()
+            startExp=time.clock()
+            
+            ######## TRAINING LOOP ########
+            
             while(True):
                 startTrial= time.clock()
                 trials+=1
-                item=takeItem(dic,lastIt)
-                lastIt.add(item)
-                sitem=str(item)
-                printNumber("0"*(2-len(sitem))+sitem)#trick to ad a 0 if single digit
+                items,lastIt = displayItemForTrainingRT(lastIt, controlStructure,selectedSystem,nbDigits,sepSign)
                 Userinput=raw_input("")
                 nt=time.clock()
                 if (Userinput=="q")or((nt-startExp)>t):
-                    pickle.dump( dic, open( pickleRtNumbers, "wb" ) )
+                    pickle.dump( controlStructure, open( pickleRt, "wb" ) )
                     print("during your training during %d s, you have seen %d items"%(t,trials))
-                    printSumDic(dic)
+                    printSumStruc(controlStructure,selectedSystem)
                     break
                 timeElapsed=nt-startTrial
                 timeElapsed_tosend=timeElapsed
-                if(timeElapsed>4):
-                    timeElapsed_tosend=2
-                if(timeElapsed<0.4):
-                    timeElapsed_tosend=1
-                if(static=="n"):
-                    dic=updateRTmeanVector(dic,item,timeElapsed_tosend)
-                    dic=computeProbabilityVector(dic,c,meta_coef)
-                    f1.write(system+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+str(item)+ ";geometricOdd;"+str(inhib)+";"+str(c)+";"+str(t)+"\n")
+                if(timeElapsed>6)or(timeElapsed<0.3):
+                    timeElapsed_tosend=-1
+                if(record=="y")and(timeElapsed_tosend!=-1):
+                    controlStructure=updateControlStructure(controlStructure,selectedSystem,nbDigits,items,timeElapsed_tosend,c,meta_coef)
+                    f1.write(str(controlStructure["infos"]["compteur"])+";"+selectedSystem['system']+";"+str(trials)+";"+str(time.time())+";"+str(timeElapsed)+";"+"".join(items)+ ";geometricOdd;"+str(inhib)+";"+str(c)+";"+str(meta_coef)+";"+str(t)+"\n")
 
 
 class SpokenNumbers(Feat):  # TODO: much
@@ -755,9 +477,8 @@ class Cards(Feat, PygameExperiment):
         f2.write(message2)
 
     def trainingGame(self):
-        nbCards=smartRawInput("nb cards",1,int)
         self.prepareDeck()
-        self.trainingRT(nbCards,True)
+        self.trainingRT()
         self.ending()
 
 class AbstractImages(Feat):
